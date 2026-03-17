@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadcast</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0a;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .broadcast-component {
+      width: 100%;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .podcast-card {
+      width: 100%;
+      max-width: 420px;
+      background: radial-gradient(circle at top left, #1f1f1f, #060606);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      position: relative;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: card-in 0.45s ease-out forwards;
+      animation-delay: 0.15s;
+    }
+
+    .podcast-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.9);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    @keyframes card-in {
+      0% {
+        opacity: 0;
+        transform: translateY(22px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .podcast-artwork {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      background: conic-gradient(from 210deg, #ffcc33, #ff6644, #b00020, #ffcc33);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .podcast-artwork::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.4), transparent 55%);
+      mix-blend-mode: screen;
+    }
+
+    .play-button {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .play-button::before {
+      content: "";
+      display: block;
+      width: 0;
+      height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 11px solid #ffffff;
+      transform: translateX(1px);
+    }
+
+    .play-button.is-playing::before {
+      border: none;
+      width: 11px;
+      height: 12px;
+      background: transparent;
+      box-shadow:
+        -3px 0 0 0 #ffffff,
+         3px 0 0 0 #ffffff;
+      transform: none;
+    }
+
+    .unread-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #3ba2ff;
+      box-shadow: 0 0 0 4px rgba(59, 162, 255, 0.16);
+    }
+
+    .podcast-meta {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .podcast-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .podcast-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .podcast-subline {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.55);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .fallback-msg {
+      display: none;
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 13px;
+      margin-top: 14px;
+      letter-spacing: 0.02em;
+    }
+  </style>
+</head>
+<body>
+  <div class="broadcast-component">
+    <div class="podcast-card" id="broadcastCard">
+      <span class="unread-dot" id="unreadDot"></span>
+      <div class="podcast-artwork">
+        <div class="play-button" id="playButton"></div>
+      </div>
+      <div class="podcast-meta">
+        <div class="podcast-label">Live Update</div>
+        <div class="podcast-title">Dalton Massacre Briefing</div>
+        <div class="podcast-subline">Press conference at 3:00 PM</div>
+      </div>
+    </div>
+
+    <div class="fallback-msg" id="fallback">[ audio unavailable on this device ]</div>
+    <audio id="broadcastAudio" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/Compelling%20Lady.mp3"></audio>
+  </div>
+
+  <script>
+    (function () {
+      const card = document.getElementById('broadcastCard');
+      const audio = document.getElementById('broadcastAudio');
+      const fallback = document.getElementById('fallback');
+      const unreadDot = document.getElementById('unreadDot');
+      const playButton = document.getElementById('playButton');
+
+      if (!audio || !audio.play) {
+        fallback.style.display = 'block';
+        fallback.textContent = '[ audio unavailable on this device ]';
+        return;
+      }
+
+      let isPlaying = false;
+      let rampIntervalId = null;
+
+      function clearRamp() {
+        if (rampIntervalId !== null) {
+          clearInterval(rampIntervalId);
+          rampIntervalId = null;
+        }
+      }
+
+      function setPlayingVisual(playing) {
+        if (!playButton) return;
+        if (playing) {
+          playButton.classList.add('is-playing');
+        } else {
+          playButton.classList.remove('is-playing');
+        }
+      }
+
+      function cleanup() {
+        clearRamp();
+        isPlaying = false;
+        setPlayingVisual(false);
+      }
+
+      function playWithRamp() {
+        // 标记已读：小蓝点消失
+        if (unreadDot) {
+          unreadDot.style.display = 'none';
+        }
+
+        // 若当前正在播放，则本次点击视为暂停
+        if (isPlaying && !audio.paused) {
+          audio.pause();
+          cleanup();
+          return;
+        }
+
+        // 从头开始播放
+        isPlaying = true;
+        audio.currentTime = 0;
+        audio.volume = 0;
+        setPlayingVisual(true);
+
+        const playPromise = audio.play();
+
+        // 渐入音量
+        let vol = 0;
+        clearRamp();
+        rampIntervalId = setInterval(() => {
+          vol = Math.min(vol + 0.07, 1);
+          audio.volume = vol;
+          if (vol >= 1) {
+            clearRamp();
+          }
+        }, 100);
+
+        audio.onended = cleanup;
+        audio.onerror = () => {
+          cleanup();
+          fallback.style.display = 'block';
+          fallback.textContent = '[ audio unavailable on this device ]';
+        };
+
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            cleanup();
+            fallback.style.display = 'block';
+            fallback.textContent = '[ tap to enable audio in this browser ]';
+          });
+        }
+      }
+
+      if (card) {
+        card.addEventListener('click', playWithRamp);
+      }
+    })();
+  </script>
+</body>
+</html>
