@@ -31,12 +31,16 @@
       gap: 0;
       align-items: flex-start;
       justify-content: center;
+      width: min(82vw, 760px);
+      transform: translateY(18vh);
     }
 
     .line {
       opacity: 0;
       transition: opacity 0.3s ease;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: break-word;
+      line-height: 1.35;
     }
 
     .line.visible {
