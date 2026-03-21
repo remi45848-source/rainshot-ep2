@@ -1,387 +1,970 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Comment Feed</title>
+  <meta charset="UTF-8" />
+  <title>Embedded Comment Section</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    :root {
+      --bg-main: #0f0f0f;
+      --bg-elevated: #181818;
+      --bg-elevated-soft: #1f1f1f;
+      --border-muted: #333333;
+      --border-active: #3ea6ff;
+      --text-primary: #f1f1f1;
+      --text-secondary: #aaaaaa;
+      --text-faint: #666666;
+      --accent-like: #3ea6ff;
+      --accent-dislike: #aaaaaa;
+      --avatar-grey: #444444;
+      --avatar-red: #8b0000;
+      --avatar-blue: #003366;
+    }
+
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #e7e9ea;
-      min-height: 100vh;
-      min-height: 100dvh;
-      padding: 0;
-      padding-top: env(safe-area-inset-top);
-      overflow-x: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .feed {
-      max-width: 600px;
+    .comment-embed {
+      max-width: 640px;
       margin: 0 auto;
-      padding: 0;
-      opacity: 0;
-      animation: feedFadeIn 0.6s ease-out forwards;
+      padding: 12px 12px 24px;
+      background-color: var(--bg-main);
     }
 
-    @keyframes feedFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    .section-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
     }
 
-    .comment {
+    .pinned-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .pinned-label::before {
+      content: "📌";
+      font-size: 12px;
+    }
+
+    .pinned-list {
       display: flex;
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px solid #2f3336;
-      opacity: 0;
-      transform: translateY(8px);
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
     }
 
-    .comment.visible {
-      animation: fadeIn 0.45s ease-out forwards;
+    .comment-card {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
 
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .comment-card:last-of-type {
+      border-bottom: none;
     }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      flex: 0 0 36px;
+      height: 36px;
       border-radius: 50%;
-      background: #333639;
-      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 12px;
       font-weight: 600;
-      color: #fff;
-      text-transform: uppercase;
+      color: #ffffff;
+      margin-right: 10px;
     }
 
-    .avatar.av-1 { background: #5b4a9e; }
-    .avatar.av-2 { background: #2e7d6e; }
-    .avatar.av-3 { background: #8b5e3c; }
-    .avatar.av-4 { background: #4a6fa5; }
-    .avatar.av-5 { background: #9e4a6a; }
-    .avatar.av-6 { background: #6b6b6b; }
+    .avatar-red {
+      background: var(--avatar-red);
+    }
 
-    .comment-body {
+    .avatar-blue {
+      background: var(--avatar-blue);
+    }
+
+    .avatar-grey {
+      background: var(--avatar-grey);
+    }
+
+    .comment-main {
       flex: 1;
       min-width: 0;
     }
 
-    .comment-header {
+    .comment-header-line {
       display: flex;
       align-items: center;
-      gap: 4px;
-      margin-bottom: 2px;
-      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 12px;
     }
 
-    .handle {
-      font-size: 15px;
-      color: #71767b;
-      font-weight: 400;
+    .username {
+      font-weight: 500;
+      color: var(--text-primary);
     }
 
-    .separator {
-      font-size: 15px;
-      color: #71767b;
+    .meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background-color: var(--text-faint);
     }
 
-    .timestamp {
-      font-size: 15px;
-      color: #71767b;
+    .meta-text {
+      font-size: 11px;
+      color: var(--text-faint);
+    }
+
+    .pinned-tag {
+      font-size: 11px;
+      color: var(--accent-like);
     }
 
     .comment-text {
-      font-size: 15px;
-      line-height: 1.4;
-      color: #e7e9ea;
-      margin-bottom: 10px;
-      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-line;
+      color: var(--text-primary);
+      margin-bottom: 6px;
     }
 
     .comment-actions {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
     }
 
-    .action-btn {
-      display: flex;
+    .action {
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: default;
-      font-family: inherit;
+      gap: 4px;
     }
 
-    .heart-icon {
-      width: 18px;
-      height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .heart-icon svg {
-      width: 16px;
-      height: 16px;
-      fill: none;
-      stroke: #71767b;
-      stroke-width: 2;
-    }
-
-    .like-count {
+    .action span.icon {
       font-size: 13px;
-      color: #71767b;
     }
 
-    .comment.comment-bold .comment-text {
-      font-weight: 600;
-      color: #fff;
+    .action-like span.icon {
+      color: var(--accent-like);
     }
 
-    .comment.comment-bold .avatar {
-      width: 44px;
-      height: 44px;
-      font-size: 18px;
+    .action-dislike span.icon {
+      color: var(--accent-dislike);
     }
 
-    .like-interactive {
-      cursor: pointer;
-    }
-
-    .like-interactive .heart-icon svg {
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .like-interactive.liked {
-      cursor: default;
-      pointer-events: none;
-    }
-
-    .like-interactive.liked .heart-icon svg {
-      animation: popIn 0.35s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;
-      fill: #f91880;
-      stroke: #f91880;
-    }
-
-    .like-interactive.liked .like-count {
-      color: #f91880;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1.0; }
-    }
-
-    @keyframes popIn {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-      100% { transform: scale(1); }
-    }
-
-    .nav-hint {
+    .comment-count {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 10px 0 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       display: flex;
-      justify-content: center;
-      padding: 24px 0 32px;
+      align-items: center;
+      gap: 8px;
     }
 
-    .chevrons {
+    .comment-count-icon {
+      font-size: 16px;
+    }
+
+    /* Input choices */
+
+    .input-area {
+      padding-top: 14px;
+      padding-bottom: 18px;
+    }
+
+    .input-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .input-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .choice-groups {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 0;
-      animation: bounce 2s ease-in-out infinite;
+      gap: 12px;
     }
 
-    .chevrons svg {
+    .choice-group {
+      background-color: var(--bg-elevated);
+      border-radius: 10px;
+      padding: 10px 10px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .choice-group-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .choice-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .choice-button {
+      width: 100%;
+      font-size: 13px;
+      text-align: left;
+      background-color: var(--bg-elevated-soft);
+      color: var(--text-primary);
+      border-radius: 8px;
+      border: 1px solid var(--border-muted);
+      padding: 8px 9px;
+      line-height: 1.4;
+      cursor: pointer;
+      outline: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease,
+        transform 0.05s ease;
       display: block;
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(6px); }
+    .choice-button:active {
+      transform: scale(0.99);
+    }
+
+    .choice-button.selected {
+      border-color: var(--border-active);
+      background-color: #242424;
+    }
+
+    .choice-button:hover {
+      border-color: #414141;
+    }
+
+    .send-container {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .send-button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #0f0f0f;
+      background-color: #f1f1f1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .send-button:active {
+      transform: scale(0.97);
+      background-color: #dddddd;
+    }
+
+    .send-button span.icon {
+      font-size: 14px;
+    }
+
+    /* User comment + replies */
+
+    .user-thread {
+      padding-top: 4px;
+      padding-bottom: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .user-main-comment {
+      padding-top: 6px;
+      padding-bottom: 2px;
+    }
+
+    .reply-list {
+      margin-left: 46px;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      padding-left: 10px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .reply-card {
+      display: flex;
+      padding: 6px 0;
+    }
+
+    .reply-avatar {
+      flex: 0 0 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-color: var(--avatar-grey);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #ffffff;
+      margin-right: 8px;
+    }
+
+    .reply-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reply-header-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    .reply-text {
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: pre-line;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .reply-actions {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .more-replies-text {
+      font-size: 12px;
+      color: var(--text-faint);
+      margin-top: 4px;
+    }
+
+    /* Top notification */
+
+    .top-notice {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .top-notice-inner {
+      margin-top: 8px;
+      background-color: rgba(24, 24, 24, 0.98);
+      color: var(--text-primary);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      transform: translateY(-120%);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .top-notice-inner.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .top-notice-icon {
+      font-size: 14px;
+    }
+
+    /* Bottom hint */
+
+    .continue-hint {
+      font-size: 11px;
+      text-align: center;
+      color: var(--text-faint);
+      padding-top: 16px;
+    }
+
+    @media (min-width: 600px) {
+      .comment-embed {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="feed" id="feed">
+  <!-- Top like-notification (hidden by default) -->
+  <div class="top-notice" aria-live="polite">
+    <div class="top-notice-inner" id="likeNotification">
+      <span class="top-notice-icon">🔔</span>
+      <span id="likeNotificationText"></span>
+    </div>
+  </div>
 
-    <div class="comment" id="c1">
-      <div class="avatar av-1">M</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@marco_reyes21</span>
-          <span class="separator">·</span>
-          <span class="timestamp">just now</span>
+  <div class="comment-embed">
+    <!-- Pinned comments section -->
+    <div class="section-header">
+      Comments · Mga komento
+    </div>
+    <div class="pinned-label">Pinned comments</div>
+
+    <div class="pinned-list" id="pinnedComments">
+      <!-- Pinned Comment A -->
+      <div class="comment-card">
+        <div class="avatar avatar-red">
+          RM
         </div>
-        <div class="comment-text">Political rivals. Has to be political rivals.</div>
-        <div class="comment-actions">
-          <div class="action-btn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count">2,341</span>
+        <div class="comment-main">
+          <div class="comment-header-line">
+            <span class="username">@rodel_m</span>
+            <span class="meta-dot"></span>
+            <span class="meta-text">3 hours ago · 3 oras na</span>
+            <span class="meta-dot"></span>
+            <span class="pinned-tag">Pinned · naka-pin</span>
+          </div>
+          <div class="comment-text">
+The Dalton family has held that senate seat for three generations.
+In the 2028 typhoon, five thousand people died.
+The flood control money went somewhere else. Did any court touch them? No.
+So now someone else delivered a verdict. I don't call this murder,
+I call it justice delayed — finally paid in full.
+          </div>
+          <div class="comment-actions">
+            <div class="action action-like">
+              <span class="icon">👍</span>
+              <span>340K</span>
+            </div>
+            <div class="action action-dislike">
+              <span class="icon">👎</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned Comment B -->
+      <div class="comment-card">
+        <div class="avatar avatar-blue">
+          CL
+        </div>
+        <div class="comment-main">
+          <div class="comment-header-line">
+            <span class="username">@claire_luz</span>
+            <span class="meta-dot"></span>
+            <span class="meta-text">5 hours ago · 5 oras na</span>
+            <span class="meta-dot"></span>
+            <span class="pinned-tag">Pinned · naka-pin</span>
+          </div>
+          <div class="comment-text">
+I hate Dalton same as all of you. But that eight‑year‑old girl
+has a birthday today. What did she steal?
+If we cheer for this, what is the difference
+between us and the killer's logic —
+as long as I think you deserve to die, then you can die?
+Today it's Dalton. Bukas, sino na?
+          </div>
+          <div class="comment-actions">
+            <div class="action action-like">
+              <span class="icon">👍</span>
+              <span>210K</span>
+            </div>
+            <div class="action action-dislike">
+              <span class="icon">👎</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned Comment C -->
+      <div class="comment-card">
+        <div class="avatar avatar-grey">
+          ??
+        </div>
+        <div class="comment-main">
+          <div class="comment-header-line">
+            <span class="username">@anonymous_ph</span>
+            <span class="meta-dot"></span>
+            <span class="meta-text">8 hours ago · 8 oras na</span>
+            <span class="meta-dot"></span>
+            <span class="pinned-tag">Pinned · naka-pin</span>
+          </div>
+          <div class="comment-text">
+Stop arguing. Forty‑seven people, not one got out.
+No strange alarms, no surviving witnesses, no early calls to the police.
+This was not some random private revenge, this was an operation.
+As for who could do it — in this country, konti lang ang may ganoong resources.
+You already know the list.
+          </div>
+          <div class="comment-actions">
+            <div class="action action-like">
+              <span class="icon">👍</span>
+              <span>270K</span>
+            </div>
+            <div class="action action-dislike">
+              <span class="icon">👎</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="comment" id="c2">
-      <div class="avatar av-2">J</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@jenmagbanua_</span>
-          <span class="separator">·</span>
-          <span class="timestamp">1m</span>
+    <!-- Comment count display -->
+    <div class="comment-count" aria-live="polite">
+      <span class="comment-count-icon">💬</span>
+      <span id="commentCountText">1,247,893 comments (updating live)</span>
+    </div>
+
+    <!-- Input area (reachable by scroll) -->
+    <div class="input-area" id="inputArea">
+      <div class="input-title">What do you think? Pili ka ng side:</div>
+      <div class="input-subtitle">
+        Choose your stance, then send your comment.
+      </div>
+
+      <div class="choice-groups">
+        <!-- Group A -->
+        <div class="choice-group">
+          <div class="choice-group-title">Reckoning · 清算</div>
+          <div class="choice-buttons">
+            <button class="choice-button" data-choice="A1">
+              The law protected them for twenty years. Now something else answered.
+            </button>
+            <button class="choice-button" data-choice="A2">
+              Only regret is that not enough of them died.
+            </button>
+            <button class="choice-button" data-choice="A3">
+              I feel sorry for that child — but I feel even more
+              for the five thousand kids who died in the typhoon.
+            </button>
+          </div>
         </div>
-        <div class="comment-text">Organized and professional — who exactly are they pointing at?</div>
-        <div class="comment-actions">
-          <div class="action-btn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count">1,893</span>
+
+        <!-- Group B -->
+        <div class="choice-group">
+          <div class="choice-group-title">Process · Due process</div>
+          <div class="choice-buttons">
+            <button class="choice-button" data-choice="B1">
+              The killer fought injustice with violence, but created a new injustice.
+            </button>
+            <button class="choice-button" data-choice="B2">
+              If you clap for this today, you lose the right
+              to complain about the next violence.
+            </button>
+            <button class="choice-button" data-choice="B3">
+              That eight‑year‑old girl never voted,
+              and never chose who her father was.
+            </button>
+          </div>
+        </div>
+
+        <!-- Group C -->
+        <div class="choice-group">
+          <div class="choice-group-title">Sidelines · 旁观</div>
+          <div class="choice-buttons">
+            <button class="choice-button" data-choice="C1">
+              Powerful people killing powerful people — anong kinalaman namin diyan.
+            </button>
+            <button class="choice-button" data-choice="C2">
+              This country has always been like this.
+            </button>
+            <button class="choice-button" data-choice="C3">
+              Whoever did it, give it one week and everybody moves on.
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="comment" id="c3">
-      <div class="avatar av-3">K</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@kuya_bong_mnl</span>
-          <span class="separator">·</span>
-          <span class="timestamp">2m</span>
-        </div>
-        <div class="comment-text">NPA? Don't make me laugh. Guerrillas don't have that kind of resources.</div>
-        <div class="comment-actions">
-          <div class="action-btn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count">1,560</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- User thread will be injected here -->
+    <div id="userThreadContainer"></div>
 
-    <div class="comment" id="c4">
-      <div class="avatar av-4">M</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@migs_garcia04</span>
-          <span class="separator">·</span>
-          <span class="timestamp">3m</span>
-        </div>
-        <div class="comment-text">Someone from the top for sure. Big fish eats small fish.</div>
-        <div class="comment-actions">
-          <div class="action-btn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count">2,011</span>
-          </div>
-        </div>
-      </div>
+    <!-- Bottom hint -->
+    <div class="continue-hint">
+      继续阅读 ↓ · keep reading
     </div>
-
-    <div class="comment" id="c5">
-      <div class="avatar av-5">M</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@maria_santos_ph</span>
-          <span class="separator">·</span>
-          <span class="timestamp">4m</span>
-        </div>
-        <div class="comment-text">Another political killing. This country gets one every few years.</div>
-        <div class="comment-actions">
-          <div class="action-btn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count">1,782</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="comment comment-bold" id="c6">
-      <div class="avatar av-6">T</div>
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="handle">@tisoy_viral77</span>
-          <span class="separator">·</span>
-          <span class="timestamp">5m</span>
-        </div>
-        <div class="comment-text">Dogs eating dogs. What's it got to do with us.</div>
-        <div class="comment-actions">
-          <button class="action-btn like-interactive" id="likeBtn">
-            <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-            <span class="like-count" id="likeCount">847</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="nav-hint">
-      <div class="chevrons">
-        <svg width="24" height="14" viewBox="0 0 24 14" fill="none">
-          <polyline points="4,2 12,10 20,2" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-        <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style="margin-top:-4px">
-          <polyline points="4,2 12,10 20,2" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-      </div>
-    </div>
-
   </div>
 
   <script>
     (function () {
-      var IDS = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'];
-      var BASE_DELAY = 1000;
+      // COMMENT COUNT UPDATER
+      const countEl = document.getElementById("commentCountText");
+      let baseCount = 1247893;
 
-      function show(id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.add('visible');
+      function formatNumber(num) {
+        return num.toLocaleString("en-US");
       }
 
-      function runSequence() {
-        for (var i = 0; i < 5; i++) {
-          (function (idx) {
-            setTimeout(function () { show(IDS[idx]); }, idx * BASE_DELAY);
-          })(i);
+      function updateCommentCount() {
+        const inc = Math.floor(Math.random() * 5) + 1; // 1-5
+        baseCount += inc;
+        if (countEl) {
+          countEl.textContent =
+            formatNumber(baseCount) + " comments (updating live)";
         }
-        var c6Delay = 4 * BASE_DELAY + 600;
-        setTimeout(function () { show(IDS[5]); }, c6Delay);
       }
 
-      var likeBtn = document.getElementById('likeBtn');
-      var likeCount = document.getElementById('likeCount');
-      var liked = false;
+      setInterval(updateCommentCount, 3000);
 
-      likeBtn.addEventListener('click', function () {
-        if (liked) return;
-        liked = true;
-        likeCount.textContent = '848';
-        likeBtn.classList.add('liked');
+      // CHOICE SELECTION + INLINE SEND BUTTON
+      const choiceButtons = Array.from(
+        document.querySelectorAll(".choice-button")
+      );
+      const userThreadContainer = document.getElementById(
+        "userThreadContainer"
+      );
+      const likeNotification = document.getElementById("likeNotification");
+      const likeNotificationText = document.getElementById(
+        "likeNotificationText"
+      );
+
+      let currentChoice = null;
+      let activeSendContainer = null;
+      let notificationTimeoutId = null;
+
+      // REPLY DATA
+      const replyMap = {
+        A1: {
+          agree: {
+            username: "@ph_user_4421",
+            text:
+              "Bro, you said what I wanted to say. Two investigations, and every time they walked away clean.",
+          },
+          disagree: {
+            username: "@concerned_citizen",
+            text:
+              "So whoever has the gun, siya na ang batas?\nWhat happens when the next guy with a gun decides he doesn't like you?",
+          },
+        },
+        A2: {
+          agree: {
+            username: "@wind_victim_2028",
+            text:
+              "You're saying what a lot of us are too afraid to type.",
+          },
+          disagree: {
+            username: "@lawstudent_ph",
+            text:
+              "Do you hear yourself right now? This is how justice dies, quietly, in the comments.",
+          },
+        },
+        A3: {
+          agree: {
+            username: "@mama_of_3",
+            text:
+              "This is the real wound — one tragedy piled on top of another.",
+          },
+          disagree: {
+            username: "@rodel_m",
+            text:
+              "Two kinds of grief don't cancel each other out. They just both hurt.",
+          },
+        },
+        B1: {
+          agree: {
+            username: "@philosophy_nerd",
+            text:
+              "This is the hard question we should be arguing about, not just cheering or booing.",
+          },
+          disagree: {
+            username: "@typhoon_survivor",
+            text:
+              "Easy to say. If your family died in that typhoon, would you still talk about theory like this?",
+          },
+        },
+        B2: {
+          agree: {
+            username: "@teacher_minda",
+            text:
+              "Clear logic. Kung ganyan ang standard, mas safe tayong lahat.",
+          },
+          disagree: {
+            username: "@frustrated_ph",
+            text:
+              "Nice in theory. But in real life, justice only moves when someone bleeds.",
+          },
+        },
+        B3: {
+          agree: {
+            username: "@human_rights_ph",
+            text:
+              "Finally someone remembers the kid instead of just the senator's name.",
+          },
+          disagree: {
+            username: "@angry_voter",
+            text:
+              "Her father spent twenty years stealing in her name. You think that didn't affect her life?",
+          },
+        },
+        C1: {
+          agree: {
+            username: "@just_living_ph",
+            text:
+              "Exactly. Let the giants kill each other. We still have work tomorrow.",
+          },
+          disagree: {
+            username: "@wake_up_ph",
+            text:
+              "You think it has nothing to do with you only because it's not your turn yet.",
+          },
+        },
+        C2: {
+          agree: {
+            username: "@tired_voter",
+            text:
+              "Too real. Same show, different season.",
+          },
+          disagree: {
+            username: "@idealist_ph",
+            text:
+              "This kind of thinking is exactly why nothing changes. Napagod ka bago pa magsimula.",
+          },
+        },
+        C3: {
+          agree: {
+            username: "@pragmatic_ph",
+            text:
+              "History says you're right — the news cycle moves on, the families stay behind.",
+          },
+          disagree: {
+            username: "@memory_ph",
+            text:
+              "5,243 families are not going to forget. Even if the timeline does.",
+          },
+        },
+      };
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function smallLikeCount() {
+        return randomInt(0, 9); // 0–9 likes
+      }
+
+      function showLikeNotification() {
+        const likes = randomInt(2, 12);
+        if (likeNotificationText) {
+          likeNotificationText.textContent =
+            "Your comment just got " + likes + " likes";
+        }
+        if (likeNotification) {
+          likeNotification.classList.add("show");
+          if (notificationTimeoutId) {
+            clearTimeout(notificationTimeoutId);
+          }
+          notificationTimeoutId = setTimeout(() => {
+            likeNotification.classList.remove("show");
+          }, 3000);
+        }
+      }
+
+      function createReplyCard(data, timeLabel) {
+        const card = document.createElement("div");
+        card.className = "reply-card";
+        card.innerHTML = `
+          <div class="reply-avatar">PH</div>
+          <div class="reply-main">
+            <div class="reply-header-line">
+              <span class="username">${data.username}</span>
+              <span class="meta-dot"></span>
+              <span class="meta-text">${timeLabel}</span>
+            </div>
+            <div class="reply-text">
+${data.text.trim()}
+            </div>
+            <div class="reply-actions">
+              <span class="action action-like">
+                <span class="icon">👍</span>
+                <span>${smallLikeCount()}</span>
+              </span>
+            </div>
+          </div>
+        `;
+        return card;
+      }
+
+      function buildUserThread(choiceKey, selectedText) {
+        const replyData = replyMap[choiceKey];
+        if (!replyData) return null;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "user-thread";
+        wrapper.id = "userThread";
+
+        const userLikes = smallLikeCount();
+
+        wrapper.innerHTML = `
+          <div class="comment-card user-main-comment">
+            <div class="avatar avatar-grey">
+              U
+            </div>
+            <div class="comment-main">
+              <div class="comment-header-line">
+                <span class="username">@ikaw_now</span>
+                <span class="meta-dot"></span>
+                <span class="meta-text">Just now · kakapost lang</span>
+              </div>
+              <div class="comment-text">
+${selectedText.trim()}
+              </div>
+              <div class="comment-actions">
+                <div class="action action-like">
+                  <span class="icon">👍</span>
+                  <span>${userLikes}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="reply-list" id="userReplyList"></div>
+        `;
+
+        return wrapper;
+      }
+
+      function scrollToElement(el) {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const offset = window.scrollY + rect.top - 60;
+        window.scrollTo({
+          top: offset,
+          behavior: "smooth",
+        });
+      }
+
+      // 为每个选项按钮挂载点击：选中 + 在该按钮后插入发送按钮
+      choiceButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // 切换选中态
+          choiceButtons.forEach((b) => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          currentChoice = btn.getAttribute("data-choice");
+
+          // 移除旧的发送容器
+          if (activeSendContainer && activeSendContainer.parentNode) {
+            activeSendContainer.parentNode.removeChild(activeSendContainer);
+          }
+
+          // 新建发送容器，插在当前按钮后面
+          const container = document.createElement("div");
+          container.className = "send-container";
+          container.innerHTML = `
+            <button class="send-button">
+              <span class="icon">📤</span>
+              <span>Send · Ipadala</span>
+            </button>
+          `;
+
+          // 插入 DOM：在该按钮之后
+          const parent = btn.parentNode;
+          if (parent) {
+            if (btn.nextSibling) {
+              parent.insertBefore(container, btn.nextSibling);
+            } else {
+              parent.appendChild(container);
+            }
+          }
+          activeSendContainer = container;
+
+          const sendButton = container.querySelector(".send-button");
+          if (sendButton) {
+            sendButton.addEventListener("click", () => {
+              const choiceKey = currentChoice;
+              if (!choiceKey) return;
+
+              const selectedText =
+                btn.innerText || btn.textContent || "";
+
+              // 清理发送按钮本身，以免重复点击
+              if (activeSendContainer && activeSendContainer.parentNode) {
+                activeSendContainer.parentNode.removeChild(
+                  activeSendContainer
+                );
+                activeSendContainer = null;
+              }
+
+              // 移除已有用户线程
+              const existing = document.getElementById("userThread");
+              if (existing && existing.parentNode) {
+                existing.parentNode.removeChild(existing);
+              }
+
+              const threadEl = buildUserThread(choiceKey, selectedText);
+              if (!threadEl) return;
+
+              if (userThreadContainer) {
+                userThreadContainer.appendChild(threadEl);
+              }
+
+              const replyList = threadEl.querySelector("#userReplyList");
+              const replyData = replyMap[choiceKey];
+
+              if (replyList && replyData) {
+                // 1 秒后出现第一个回复
+                setTimeout(() => {
+                  const agreeCard = createReplyCard(
+                    replyData.agree,
+                    "1 hour ago"
+                  );
+                  replyList.appendChild(agreeCard);
+                }, 1000);
+
+                // 2 秒后出现第二个回复 + “更多回复”文案
+                setTimeout(() => {
+                  const disagreeCard = createReplyCard(
+                    replyData.disagree,
+                    "45 min ago"
+                  );
+                  replyList.appendChild(disagreeCard);
+
+                  const moreRepliesCount = randomInt(40, 200);
+                  const more = document.createElement("div");
+                  more.className = "more-replies-text";
+                  more.textContent =
+                    "More " +
+                    moreRepliesCount +
+                    " replies · display only";
+                  replyList.appendChild(more);
+                }, 2000);
+              }
+
+              scrollToElement(threadEl);
+              showLikeNotification();
+            });
+          }
+        });
       });
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runSequence);
-      } else {
-        runSequence();
-      }
     })();
   </script>
 </body>
