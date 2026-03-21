@@ -17,7 +17,7 @@
       min-height: -webkit-fill-available;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       overflow: hidden;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
@@ -48,6 +48,8 @@
       gap: 32px;
       opacity: 1;
       transition: opacity 0.5s ease;
+      width: 100%;
+      transform: translateY(18vh);
     }
 
     .alert-container.fade-out {
