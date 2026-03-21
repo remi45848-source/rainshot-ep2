@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Breaking</title>
   <style>
     * {
@@ -14,12 +14,16 @@
     body {
       background: #000000;
       min-height: 100vh;
+      min-height: -webkit-fill-available;
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      padding-left: 15vw;
-      font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Courier New", monospace;
-      overflow: hidden;
+      padding-left: max(16px, 6vw);
+      padding-right: 12px;
+      font-family: ui-monospace, "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Courier New", monospace;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .push-block {
@@ -31,7 +35,8 @@
     .line {
       opacity: 0;
       transition: opacity 0.3s ease;
-      white-space: nowrap;
+      white-space: normal;
+      max-width: 92vw;
     }
 
     .line.visible {
@@ -75,16 +80,55 @@
   </div>
 
   <script>
-    const lines = document.querySelectorAll('.line');
+    (function () {
+      var lines = document.querySelectorAll('.line');
+      var started = false;
 
-    lines.forEach(line => {
-      const delay = parseInt(line.dataset.delay, 10);
-      setTimeout(() => {
-        line.classList.add('visible');
-        const cursor = line.querySelector('.cursor-blink');
-        if (cursor) cursor.style.display = 'inline';
-      }, delay);
-    });
+      function runSequence() {
+        if (started) return;
+        started = true;
+        for (var i = 0; i < lines.length; i++) {
+          (function (line) {
+            var delay = parseInt(line.getAttribute('data-delay'), 10);
+            if (isNaN(delay)) delay = 0;
+            setTimeout(function () {
+              line.classList.add('visible');
+              var cursor = line.querySelector('.cursor-blink');
+              if (cursor) cursor.style.display = 'inline';
+            }, delay);
+          })(lines[i]);
+        }
+      }
+
+      /* 在父页里预隐藏 iframe 时 iOS 会节流定时器；等真正进入视口再开始逐行 */
+      function arm() {
+        if (typeof IntersectionObserver !== 'undefined') {
+          var obs = new IntersectionObserver(
+            function (entries) {
+              for (var j = 0; j < entries.length; j++) {
+                if (entries[j].isIntersecting) {
+                  obs.disconnect();
+                  runSequence();
+                  return;
+                }
+              }
+            },
+            { root: null, threshold: 0.05 }
+          );
+          obs.observe(document.body);
+        } else {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runSequence);
+          } else {
+            runSequence();
+          }
+        }
+        setTimeout(function () {
+          if (!started) runSequence();
+        }, 1200);
+      }
+      arm();
+    })();
   </script>
 </body>
 </html>
