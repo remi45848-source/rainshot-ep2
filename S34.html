@@ -22,8 +22,7 @@
       padding-right: 12px;
       font-family: ui-monospace, "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Courier New", monospace;
       overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow-y: hidden;
     }
 
     .push-block {
@@ -35,8 +34,7 @@
     .line {
       opacity: 0;
       transition: opacity 0.3s ease;
-      white-space: normal;
-      max-width: 92vw;
+      white-space: nowrap;
     }
 
     .line.visible {
