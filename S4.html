@@ -163,7 +163,7 @@
 </head>
 <body>
   <div class="lockscreen">
-    <div class="lock-time" id="lockTime">7:03</div>
+    <div class="lock-time" id="lockTime">9:41</div>
     <div class="lock-date" id="lockDate">Friday, March 13</div>
 
     <div class="notifications-stack" id="notificationsStack">
@@ -209,14 +209,19 @@
 
   <script>
     (function () {
-      var INTERVAL_MS = 2000;
+      var INTERVAL_MS = 1200;
       var NOTIF_IDS = ['notif-1', 'notif-2', 'notif-3'];
 
       function setLockScreenTime() {
         var now = new Date();
+        var hours = now.getHours();
+        var mins = now.getMinutes();
+        var timeStr = hours + ':' + (mins < 10 ? '0' : '') + mins;
         var options = { weekday: 'long', month: 'long', day: 'numeric' };
         var dateStr = now.toLocaleDateString('en-US', options);
+        var timeEl = document.getElementById('lockTime');
         var dateEl = document.getElementById('lockDate');
+        if (timeEl) timeEl.textContent = timeStr;
         if (dateEl) dateEl.textContent = dateStr;
       }
 
