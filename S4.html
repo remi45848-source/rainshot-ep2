@@ -1,601 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rainshot — Episode 2</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; -webkit-font-smoothing: antialiased; }
-        body { font-family: 'Cormorant Garamond', 'Georgia', serif; background: #0a0a0a; color: #e8e8e8; font-weight: 300; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>iPhone Lock Screen Notifications</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        #startOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.98);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10000; opacity: 1; transition: opacity 0.8s ease;
-        }
-        #startOverlay.hidden { opacity: 0; pointer-events: none; }
-        #startButton {
-            padding: 20px 50px; font-size: 1.3em; font-family: 'Cormorant Garamond', serif; font-weight: 300;
-            letter-spacing: 3px; background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; cursor: pointer;
-            border-radius: 2px; transition: all 0.4s ease;
-        }
-        #startButton:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* Gray-blue gradient — dark at top, lighter toward bottom */
+      background: linear-gradient(180deg, #2a3540 0%, #3a4855 30%, #4a5a6a 55%, #5c6d7e 80%, #6e8194 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      padding: 0;
+      padding-top: env(safe-area-inset-top);
+      overflow-x: hidden;
+    }
 
-        .viewport { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-        .state {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; visibility: hidden;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .state.active { opacity: 1; visibility: visible; pointer-events: auto; }
+    .lockscreen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px 24px;
+      max-width: 430px;
+      margin: 0 auto;
+    }
 
-        .bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        .text-content {
-            font-size: 1.35em; line-height: 2.4; letter-spacing: 0.04em;
-            text-align: center; max-width: 85%; padding: 40px;
-        }
-        .text-content .emphasis { font-weight: 500; color: #fff; }
+    .lock-time {
+      font-size: 82px;
+      font-weight: 200;
+      color: #fff;
+      letter-spacing: -2px;
+      margin-top: 60px;
+      margin-bottom: 4px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
 
-        /* Tone palette (Episode 2) */
-        .tone-rain-open      { background: #09090e; }  /* S1, S3 opening */
-        .tone-information    { background: #08080d; }  /* S5, S6 feed buildup */
-        .tone-opinion        { background: #0a0a0c; }  /* S8, S9, S10, S12 */
-        .tone-official       { background: #080c10; }  /* S14, S16 press conf */
-        .tone-consensus      { background: #0c0a08; }  /* S18, S20 warm dim */
-        .tone-dissolve       { background: #0b0b0a; }  /* S21, S24–S26 forgetting */
-        .tone-midnight       { background: #060608; }  /* S28, S29, S31 */
-        .tone-strike         { background: #040404; }  /* S33, S36 absolute dark */
+    .lock-date {
+      font-size: 22px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 120px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
 
-        /* Generic placeholder visual language */
-        .video-placeholder-rect {
-            width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .video-placeholder-label,
-        .ui-placeholder-label,
-        .audio-placeholder-label {
-            font-family: "SF Mono","Fira Code","Fira Mono","Roboto Mono","Courier New",monospace;
-            font-size: 0.8em;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.15);
-        }
+    .notifications-stack {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
 
-        .ui-placeholder-container {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%;
-        }
+    .notification-item {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(50, 50, 52, 0.92);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border-radius: 22px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: auto;
+    }
 
-        .audio-placeholder-container {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 18px;
-            width: 100%; height: 100%;
-        }
-        .audio-bars {
-            display: flex; gap: 8px; align-items: flex-end;
-        }
-        .audio-bar {
-            width: 4px;
-            height: 24px;
-            background: rgba(255,255,255,0.2);
-        }
+    .notification-item.visible {
+      animation: notificationDrop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
 
-        /* S30 special: animated bars to flatline */
-        .audio-bars.s30-anim .audio-bar {
-            animation: s30Fall 2s ease-out forwards;
-        }
-        @keyframes s30Fall {
-            0%   { height: 26px; }
-            50%  { height: 14px; }
-            100% { height: 2px; }
-        }
+    @keyframes notificationDrop {
+      0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      60% {
+        transform: translateY(6%);
+        opacity: 1;
+      }
+      80% {
+        transform: translateY(-2%);
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
-        .nav-hint {
-            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            font-size: 18px; color: rgba(255, 255, 255, 0.35); z-index: 1000;
-            opacity: 0; transition: opacity 0.6s ease;
-            display: flex; flex-direction: column; align-items: center; line-height: 0.6;
-        }
-        .nav-hint.visible { opacity: 1; }
-        .nav-hint .arrow { display: inline-block; animation: bounce 2s ease infinite; }
+    .notification-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
 
-        .state-indicator {
-            position: fixed; top: 30px; right: 30px; font-size: 10px;
-            color: rgba(255, 255, 255, 0.2); z-index: 1000;
-        }
+    .notification-app {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(4px); }
-        }
+    .notification-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
 
-        #finalFade {
-            position: fixed; inset: 0; z-index: 9999; background: #000;
-            opacity: 0; pointer-events: none; transition: opacity 2.5s ease-in;
-        }
-        #finalFade.active { opacity: 1; pointer-events: all; }
+    .notification-item[data-app="gma"] .notification-icon { background: #c00; }
+    .notification-item[data-app="twitter"] .notification-icon { background: #000; }
+    .notification-item[data-app="cnn"] .notification-icon { background: #cc0000; }
 
-        /* S30 blackout overlay */
-        #blackoutOverlay {
-            position: fixed; inset: 0; z-index: 8000; background: #000;
-            opacity: 0; pointer-events: none; transition: opacity 2s ease-in;
-        }
-        #blackoutOverlay.dimming { opacity: 1; }
+    .notification-app-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
 
-        /* S32 vibrate fallback: shake animation on label */
-        .shake {
-            animation: shake 0.4s linear infinite;
-        }
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            50% { transform: translateX(2px); }
-            75% { transform: translateX(-1px); }
-            100% { transform: translateX(0); }
-        }
-    </style>
+    .notification-time {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .notification-banner {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ff6b6b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .notification-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .notification-body {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.35;
+    }
+
+    .notification-item[data-app="gma"] .notification-banner { display: block; }
+    .notification-item[data-app="twitter"] .notification-banner { display: block; }
+    .notification-item[data-app="cnn"] .notification-banner { display: none; }
+  </style>
 </head>
 <body>
+  <div class="lockscreen">
+    <div class="lock-time" id="lockTime">9:41</div>
+    <div class="lock-date" id="lockDate">Friday, March 13</div>
 
-    <div id="startOverlay">
-        <button id="startButton">ENTER STORY</button>
+    <div class="notifications-stack" id="notificationsStack">
+      <div class="notification-item" data-app="gma" id="notif-1">
+        <div class="notification-header">
+          <div class="notification-app">
+            <div class="notification-icon">G</div>
+            <span class="notification-app-name">GMA News</span>
+          </div>
+          <span class="notification-time">now</span>
+        </div>
+        <div class="notification-banner">⚠ Breaking News</div>
+        <div class="notification-title">Senator Dalton family massacre — final death toll: 47</div>
+        <div class="notification-body">Family 11, guests 22, staff 14. Scene cordoned. Investigation ongoing.</div>
+      </div>
+
+      <div class="notification-item" data-app="twitter" id="notif-2">
+        <div class="notification-header">
+          <div class="notification-app">
+            <div class="notification-icon">𝕏</div>
+            <span class="notification-app-name">X</span>
+          </div>
+          <span class="notification-time">now</span>
+        </div>
+        <div class="notification-banner">Trending</div>
+        <div class="notification-title">BREAKING: Dalton estate massacre — 47 dead confirmed</div>
+        <div class="notification-body">Multiple sources. Police on scene. 11 family, 22 guests, 14 staff. Developing.</div>
+      </div>
+
+      <div class="notification-item" data-app="cnn" id="notif-3">
+        <div class="notification-header">
+          <div class="notification-app">
+            <div class="notification-icon">C</div>
+            <span class="notification-app-name">CNN</span>
+          </div>
+          <span class="notification-time">now</span>
+        </div>
+        <div class="notification-title">47 dead in Senator Dalton family massacre, officials say</div>
+        <div class="notification-body">11 family members, 22 guests, 14 security and staff. Scene sealed. Investigation underway.</div>
+      </div>
     </div>
-
-    <div class="viewport" id="viewport"></div>
-    <div id="finalFade"></div>
-    <div id="blackoutOverlay"></div>
-    <div class="state-indicator" id="stateIndicator">01 / 36</div>
-    <div class="nav-hint" id="navHint"><span class="arrow">&#709;</span><span class="arrow" style="animation-delay:0.15s">&#709;</span></div>
-
-    <!-- S1 | text | tone-rain-open | Level 1 -->
-    <!-- S2 | video | tone-rain-open | Level 2 -->
-    <!-- S3 | text | tone-rain-open | Level 1 -->
-    <!-- S4 | UI | tone-information | Level 2 -->
-    <!-- S5 | text | tone-information | Level 2 -->
-    <!-- S6 | text | tone-information | Level 2 -->
-    <!-- S7 | interactive | tone-information | Level 3→4 -->
-    <!-- S8 | text | tone-opinion | Level 3 -->
-    <!-- S9 | text | tone-opinion | Level 2 -->
-    <!-- S10 | text | tone-opinion | Level 2 -->
-    <!-- S11 | interactive | tone-opinion | Level 4 -->
-    <!-- S12 | text | tone-opinion | Level 3 -->
-    <!-- S13 | audio | tone-official | Level 3 -->
-    <!-- S14 | text | tone-official | Level 2 -->
-    <!-- S15 | video | tone-official | Level 3 -->
-    <!-- S16 | text | tone-official | Level 3 -->
-    <!-- S17 | UI | tone-consensus | Level 3 -->
-    <!-- S18 | text | tone-consensus | Level 2 -->
-    <!-- S19 | UI | tone-consensus | Level 2 -->
-    <!-- S20 | text | tone-consensus | Level 2 -->
-    <!-- S21 | text | tone-dissolve | Level 1 -->
-    <!-- S22 | UI | tone-dissolve | Level 1 -->
-    <!-- S23 | video | tone-dissolve | Level 2 -->
-    <!-- S24 | text | tone-dissolve | Level 1 -->
-    <!-- S25 | text | tone-dissolve | Level 1 -->
-    <!-- S26 | text | tone-dissolve | Level 1 -->
-    <!-- S27 | UI | tone-dissolve | Level 1 -->
-    <!-- S28 | text | tone-midnight | Level 1 -->
-    <!-- S29 | text | tone-midnight | Level 1 -->
-    <!-- S30 | audio | tone-midnight | Level 0 -->
-    <!-- S31 | text | tone-midnight | Level 1 -->
-    <!-- S32 | UI | tone-strike | Level 3 -->
-    <!-- S33 | text | tone-strike | Level 2 -->
-    <!-- S34 | UI | tone-strike | Level 4 -->
-    <!-- S35 | video | tone-strike | Level 5 -->
-    <!-- S36 | text | tone-strike | Level 5 -->
-
-    <script>
-        // Ambient loop
-        var ambientAudio = new Audio("https://files.catbox.moe/jn29tb.mp3");
-        ambientAudio.loop = true;
-        ambientAudio.volume = 0.3;
-
-        var states = [
-            // index 0 -> S1
-            { type: 'text', tone: 'tone-rain-open',
-              html: '<p>The rain hadn&#39;t stopped. Not last night&#39;s kind of rain &mdash;<br>that violence was over. This was the rain that stays.<br>Fine, even, patient. As if the sky hadn&#39;t decided yet<br>how to end things.</p>' },
-
-            // index 1 -> S2
-            { type: 'video', tone: 'tone-rain-open',
-              label: '[ VIDEO — S2 · city morning montage · 10s ]' },
-
-            // index 2 -> S3
-            { type: 'text', tone: 'tone-rain-open',
-              html: '<p>The city woke differently that morning. No one opened music.<br>No one scrolled for entertainment.</p><p class="emphasis">Everyone was looking at the same thing.</p>' },
-
-            // index 3 -> S4
-            { type: 'ui', tone: 'tone-information',
-              label: '[ UI — S4 · news app push notification ]' },
-
-            // index 4 -> S5
-            { type: 'text', tone: 'tone-information',
-              html: '<p>The internet that morning was a pot of water<br>just before boiling.</p><p class="emphasis">Surface still. But something moving underneath.</p>' },
-
-            // index 5 -> S6
-            { type: 'text', tone: 'tone-information',
-              html: '<p>In this country, one thing has never changed:</p><p class="emphasis">when something large enough happens, everyone opens<br>the same place at the same time.</p>' },
-
-            // index 6 -> S7
-            { type: 'ui', tone: 'tone-information',
-              label: '[ UI — S7 · TikTok-style feed · 5 items ]' },
-
-            // index 7 -> S8
-            { type: 'text', tone: 'tone-opinion',
-              html: '<p>Some said: this is justice.</p><p>Some said: this is terror.</p><p>Some said: this has nothing to do with us.</p><p class="emphasis">Three voices. The same morning.<br>The same fury. Three entirely different things.</p>' },
-
-            // index 8 -> S9
-            { type: 'text', tone: 'tone-opinion',
-              html: '<p class="emphasis">The Dalton family.</p><p>Three generations in the Senate. One Vice President.<br>A political map stretching across three northern provinces,<br>held for nearly forty years.</p>' },
-
-            // index 9 -> S10
-            { type: 'text', tone: 'tone-opinion',
-              html: '<p>The law had never touched them.</p><p>Every investigation stopped quietly<br>at some point along the way.</p><p class="emphasis">Someone had now found another way<br>to finish the job.</p>' },
-
-            // index 10 -> S11
-            { type: 'ui', tone: 'tone-opinion',
-              label: '[ UI — S11 · comment section · 3 positions · 9 options ]' },
-
-            // index 11 -> S12
-            { type: 'text', tone: 'tone-opinion',
-              html: '<p>Every voice had its logic.</p><p class="emphasis">That was the most unsettling thing.</p>' },
-
-            // index 12 -> S13
-            { type: 'audio', tone: 'tone-official',
-              label: '[ AUDIO — S13 · broadcast voice · Web Speech API ]' },
-
-            // index 13 -> S14
-            { type: 'text', tone: 'tone-official',
-              html: '<p>In this country, a press conference follows a fixed ritual.</p><p>Not to reveal the truth.</p><p class="emphasis">To release a version that can be accepted.</p><p>Everyone knows this. Everyone watches anyway.</p>' },
-
-            // index 14 -> S15
-            { type: 'video', tone: 'tone-official',
-              label: '[ VIDEO — S15 · press conference · 15s · lip-sync ]' },
-
-            // index 15 -> S16
-            { type: 'text', tone: 'tone-official',
-              html: '<p>Every reporter in the room raised their hand at once.</p><p class="emphasis">He answered none of them.</p>' },
-
-            // index 16 -> S17
-            { type: 'ui', tone: 'tone-consensus',
-              label: '[ UI — S17 · X live reactions · like interaction ]' },
-
-            // index 17 -> S18
-            { type: 'text', tone: 'tone-consensus',
-              html: '<p><em>Dogs eating dogs.</em> The phrase spread widely<br>that afternoon.</p><p>It carried a strange comfort.</p><p>It meant: we understand the logic of this.<br>We know whose world this belongs to.<br>This has nothing to do with us.</p><p class="emphasis">Most people filed the day away<br>in a familiar drawer and closed it.</p>' },
-
-            // index 18 -> S19
-            { type: 'ui', tone: 'tone-consensus',
-              label: '[ UI — S19 · X Trending · afternoon · #DaltonMassacre #1 ]' },
-
-            // index 19 -> S20
-            { type: 'text', tone: 'tone-consensus',
-              html: '<p>Only a few people felt, that afternoon,<br>that something was wrong.</p><p>They couldn&#39;t say what. Only the feeling &mdash;</p><p class="emphasis">like walking into a room where everything<br>is in its place, but the air has changed.</p>' },
-
-            // index 20 -> S21
-            { type: 'text', tone: 'tone-dissolve',
-              html: '<p>Dinnertime. The news was still running,<br>but there was nothing new.</p><p class="emphasis">The same footage. The same phrasing.<br>The same <em>investigation is ongoing.</em></p>' },
-
-            // index 21 -> S22
-            { type: 'ui', tone: 'tone-dissolve',
-              label: '[ UI — S22 · X Trending · 9PM · #DaltonMassacre #3 ↓ ]' },
-
-            // index 22 -> S23
-            { type: 'video', tone: 'tone-dissolve',
-              label: '[ VIDEO — S23 · city evening · 10s ]' },
-
-            // index 23 -> S24
-            { type: 'text', tone: 'tone-dissolve',
-              html: '<p class="emphasis">The day had mostly passed.</p>' },
-
-            // index 24 -> S25
-            { type: 'text', tone: 'tone-dissolve',
-              html: '<p>Someone in the comments posted a line<br>that got twenty-seven thousand likes:</p><p class="emphasis"><em>&quot;Let the powerful deal with<br>the powerful. We&#39;re just here to watch.&quot;</em></p>' },
-
-            // index 25 -> S26
-            { type: 'text', tone: 'tone-dissolve',
-              html: '<p>Most people assumed that was probably how it would go.</p><p>A few arrests. Some months of noise. Case closed.</p><p class="emphasis">When had this country ever been<br>any different.</p>' },
-
-            // index 26 -> S27
-            { type: 'ui', tone: 'tone-dissolve',
-              label: '[ UI — S27 · X Trending · 11PM · #DaltonMassacre #5 ↓↓ ]' },
-
-            // index 27 -> S28
-            { type: 'text', tone: 'tone-midnight',
-              html: '<p class="emphasis">Midnight.</p><p>The city went quiet.</p>' },
-
-            // index 28 -> S29
-            { type: 'text', tone: 'tone-midnight',
-              html: '<p>The rain, finally, had stopped.</p>' },
-
-            // index 29 -> S30 (special audio / blackout)
-            { type: 'audio-s30', tone: 'tone-midnight',
-              label: '[ AUDIO — S30 · ambient fade · waveform to flatline ]' },
-
-            // index 30 -> S31
-            { type: 'text', tone: 'tone-midnight',
-              html: '<p class="emphasis">2:17 AM.</p>' },
-
-            // index 31 -> S32 (special UI / vibration)
-            { type: 'ui-s32', tone: 'tone-strike',
-              label: '[ UI — S32 · push alert · vibration · red badge ]' },
-
-            // index 32 -> S33
-            { type: 'text', tone: 'tone-strike',
-              html: '<p>Most people were pulled from sleep by the vibration.</p><p>Eyes half-open. Habit made them tap it.</p><p class="emphasis">They assumed it was something<br>about a celebrity.</p>' },
-
-            // index 33 -> S34
-            { type: 'ui', tone: 'tone-strike',
-              label: '[ UI — S34 · push notification · line by line · truncated ]' },
-
-            // index 34 -> S35
-            { type: 'video', tone: 'tone-strike',
-              label: '[ VIDEO — S35 · Grand Hyatt exterior · night · 10s ]' },
-
-            // index 35 -> S36
-            { type: 'text', tone: 'tone-strike',
-              html: '<p class="emphasis">The nerves of an entire country<br>pulled taut again.</p>' }
-        ];
-
-        var TOTAL = states.length;
-        var currentIndex = -1;
-        var isTransitioning = false;
-        var autoTimer = null;
-        var scrollCooldown = false;
-        var blackoutLock = false;
-
-        // Map specific states to fully built HTML components
-        // S4  -> index 3   notification-component.html
-        // S7  -> index 6   tiktok-feed.html
-        // S11 -> index 10  comment-feed.html
-        // S13 -> index 12  news-broadcast-audio.html
-        // S17 -> index 16  trending-topics.html
-        // S19 -> index 18  trending-topics-02.html
-        // S22 -> index 21  trending-topics-03.html
-        // S32 -> index 31  push-notification-alert.html
-        // S34 -> index 33  breaking-news.html
-        var interactiveIframes = {
-            3:  'notification-component.html',
-            6:  'tiktok-feed.html',
-            10: 'comment-feed.html',
-            12: 'news-broadcast-audio.html',
-            16: 'trending-topics.html',
-            18: 'trending-topics-02.html',
-            21: 'trending-topics-03.html',
-            31: 'push-notification-alert.html',
-            33: 'breaking-news.html'
-        };
-
-        function buildStateElement(index, state) {
-            var stateEl = document.createElement('div');
-            stateEl.className = 'state';
-            stateEl.setAttribute('data-index', index);
-
-            var inner = '<div class="bg ' + state.tone + '"></div>';
-
-            if (state.type === 'text') {
-                inner += '<div class="text-content">' + state.html + '</div>';
-            } else if (state.type === 'video') {
-                inner += '<div class="video-placeholder-rect">' +
-                         '<div class="video-placeholder-label">' + state.label + '</div>' +
-                         '</div>';
-            } else if (state.type === 'ui' || state.type === 'ui-s32') {
-                // For mapped UI states, embed the full HTML component via iframe.
-                if (interactiveIframes.hasOwnProperty(index)) {
-                    inner += '<iframe class="video-placeholder-rect" src="' + interactiveIframes[index] + '" loading="lazy"></iframe>';
-                } else {
-                    inner += '<div class="ui-placeholder-container">' +
-                             '<div class="ui-placeholder-label">' + state.label + '</div>' +
-                             '</div>';
-                }
-            } else if (state.type === 'audio' || state.type === 'audio-s30') {
-                // S13: use full audio UI iframe if provided; S30 keeps internal special bars.
-                if (interactiveIframes.hasOwnProperty(index) && state.type === 'audio') {
-                    inner += '<iframe class="video-placeholder-rect" src="' + interactiveIframes[index] + '" loading="lazy"></iframe>';
-                } else {
-                    inner += '<div class="audio-placeholder-container">' +
-                             '<div class="audio-bars' + (state.type === "audio-s30" ? " s30-bars" : "") + '">' +
-                             '<div class="audio-bar"></div>' +
-                             '<div class="audio-bar"></div>' +
-                             '<div class="audio-bar"></div>' +
-                             '<div class="audio-bar"></div>' +
-                             '<div class="audio-bar"></div>' +
-                             '</div>' +
-                             '<div class="audio-placeholder-label">' + state.label + '</div>' +
-                             '</div>';
-                }
-            }
-
-            stateEl.innerHTML = inner;
-            return stateEl;
-        }
-
-        function init() {
-            var viewport = document.getElementById('viewport');
-            for (var i = 0; i < TOTAL; i++) {
-                viewport.appendChild(buildStateElement(i, states[i]));
-            }
-
-            document.getElementById('startButton').addEventListener('click', startExperience);
-            document.getElementById('startButton').addEventListener('touchend', function(e) {
-                e.preventDefault(); startExperience();
-            });
-
-            // Input: wheel
-            window.addEventListener('wheel', function(e) {
-                if (scrollCooldown) return;
-                if (currentIndex < 0) return;
-                if (blackoutLock) return;
-                scrollCooldown = true;
-                if (e.deltaY > 0) gotoState(currentIndex + 1);
-                else if (e.deltaY < 0) gotoState(currentIndex - 1);
-                setTimeout(function() { scrollCooldown = false; }, 1200);
-            }, { passive: true });
-
-            // Input: touch
-            var touchStartY = 0;
-            window.addEventListener('touchstart', function(e) {
-                if (blackoutLock) return;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            window.addEventListener('touchend', function(e) {
-                if (blackoutLock) return;
-                if (currentIndex < 0) return;
-                var diff = touchStartY - e.changedTouches[0].clientY;
-                if (Math.abs(diff) > 50) {
-                    if (diff > 0) gotoState(currentIndex + 1);
-                    else gotoState(currentIndex - 1);
-                }
-            }, { passive: true });
-
-            // Input: keyboard
-            window.addEventListener('keydown', function(e) {
-                if (blackoutLock) return;
-                if (currentIndex < 0) return;
-                if (e.key === 'ArrowDown' || e.key === ' ') gotoState(currentIndex + 1);
-                if (e.key === 'ArrowUp') gotoState(currentIndex - 1);
-            });
-        }
-
-        var started = false;
-        function startExperience() {
-            if (started) return;
-            started = true;
-            document.getElementById('startOverlay').classList.add('hidden');
-            try {
-                ambientAudio.play().catch(function() {});
-            } catch (e) {}
-            setTimeout(function() { gotoState(0); }, 300);
-        }
-
-        function gotoState(index) {
-            if (index < 0 || index >= TOTAL) { return; }
-            if (blackoutLock) return;
-            if (isTransitioning && index !== currentIndex) return;
-            isTransitioning = true;
-
-            if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
-
-            var hint = document.getElementById('navHint');
-            hint.classList.remove('visible');
-
-            var allStates = document.querySelectorAll('.state');
-            for (var s = 0; s < allStates.length; s++) {
-                allStates[s].classList.remove('active');
-            }
-
-            var activeEl = document.querySelector('[data-index="' + index + '"]');
-            activeEl.classList.add('active');
-
-            currentIndex = index;
-            var displayNumber = (index + 1);
-            document.getElementById('stateIndicator').innerText =
-                (displayNumber < 10 ? '0' : '') + displayNumber + ' / 36';
-
-            var state = states[index];
-
-            // Text states
-            if (state.type === 'text') {
-                if (index === TOTAL - 1) {
-                    // S36: final fade after 5 seconds, ambient fade-out
-                    setTimeout(function() {
-                        document.getElementById('finalFade').classList.add('active');
-                        var fadeSteps = 20;
-                        var step = 0;
-                        var fadeTimer = setInterval(function() {
-                            step++;
-                            ambientAudio.volume = Math.max(0, 0.3 * (1 - step / fadeSteps));
-                            if (step >= fadeSteps) {
-                                clearInterval(fadeTimer);
-                                ambientAudio.pause();
-                            }
-                        }, 100);
-                    }, 5000);
-                } else {
-                    setTimeout(function() { hint.classList.add('visible'); }, 1200);
-                }
-                setTimeout(function() { isTransitioning = false; }, 800);
-                return;
-            }
-
-            // Generic video states (auto-advance after 3s, no nav hint)
-            if (state.type === 'video') {
-                setTimeout(function() { isTransitioning = false; }, 800);
-                autoTimer = setTimeout(function() {
-                    gotoState(index + 1);
-                }, 3000);
-                return;
-            }
-
-            // Generic audio states (non-S30): auto-advance after 3s
-            if (state.type === 'audio') {
-                setTimeout(function() { isTransitioning = false; }, 800);
-                autoTimer = setTimeout(function() {
-                    gotoState(index + 1);
-                }, 3000);
-                return;
-            }
-
-            // Generic UI states (non-special): auto-advance after 3s
-            if (state.type === 'ui') {
-                setTimeout(function() { isTransitioning = false; }, 800);
-                autoTimer = setTimeout(function() {
-                    gotoState(index + 1);
-                }, 3000);
-                return;
-            }
-
-            // S30 special audio with blackout (index 29)
-            if (state.type === 'audio-s30') {
-                blackoutLock = true;
-                // animate bars dropping to flat over 2s
-                var barsContainer = activeEl.querySelector('.audio-bars');
-                if (barsContainer) {
-                    barsContainer.classList.add('s30-anim');
-                }
-                setTimeout(function() {
-                    document.getElementById('blackoutOverlay').classList.add('dimming');
-                }, 2000);
-                setTimeout(function() {
-                    document.getElementById('blackoutOverlay').classList.remove('dimming');
-                    blackoutLock = false;
-                    gotoState(index + 1);
-                }, 3500);
-                setTimeout(function() { isTransitioning = false; }, 800);
-                return;
-            }
-
-            // S32 special UI with vibration (index 31)
-            if (state.type === 'ui-s32') {
-                var labelEl = activeEl.querySelector('.ui-placeholder-label');
-                try {
-                    if (navigator.vibrate) {
-                        navigator.vibrate(400);
-                    } else if (labelEl) {
-                        labelEl.classList.add('shake');
-                    }
-                } catch (e) {
-                    if (labelEl) {
-                        labelEl.classList.add('shake');
-                    }
-                }
-                setTimeout(function() { isTransitioning = false; }, 800);
-                autoTimer = setTimeout(function() {
-                    gotoState(index + 1);
-                }, 2000);
-                return;
-            }
-
-            setTimeout(function() { isTransitioning = false; }, 800);
-        }
-
-        init();
-    </script>
+  </div>
+
+  <script>
+    (function () {
+      var INTERVAL_MS = 2000;
+      var NOTIF_IDS = ['notif-1', 'notif-2', 'notif-3'];
+
+      function setLockScreenTime() {
+        var now = new Date();
+        var hours = now.getHours();
+        var mins = now.getMinutes();
+        var timeStr = hours + ':' + (mins < 10 ? '0' : '') + mins;
+        var options = { weekday: 'long', month: 'long', day: 'numeric' };
+        var dateStr = now.toLocaleDateString('en-US', options);
+        var timeEl = document.getElementById('lockTime');
+        var dateEl = document.getElementById('lockDate');
+        if (timeEl) timeEl.textContent = timeStr;
+        if (dateEl) dateEl.textContent = dateStr;
+      }
+
+      function playNotificationSound() {
+        try {
+          var C = window.AudioContext || window.webkitAudioContext;
+          if (!C) return;
+          var ctx = new C();
+          if (ctx.state === 'suspended') ctx.resume();
+          var gain = ctx.createGain();
+          gain.gain.value = 0.2;
+          gain.connect(ctx.destination);
+          var play = function (freq, start, dur) {
+            var osc = ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            osc.start(start);
+            osc.stop(start + dur);
+          };
+          play(880, 0, 0.08);
+          play(988, 0.12, 0.08);
+        } catch (e) {}
+      }
+
+      function showNotification(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('visible');
+        playNotificationSound();
+      }
+
+      function runSequence() {
+        setLockScreenTime();
+        NOTIF_IDS.forEach(function (id, i) {
+          setTimeout(function () { showNotification(id); }, i * INTERVAL_MS);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSequence);
+      } else {
+        runSequence();
+      }
+    })();
+  </script>
 </body>
 </html>
-
