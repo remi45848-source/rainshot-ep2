@@ -2,23 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Embedded Comment Section</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TikTok 信息流</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     :root {
-      --bg-main: #0f0f0f;
-      --bg-elevated: #181818;
-      --bg-elevated-soft: #1f1f1f;
-      --border-muted: #333333;
-      --border-active: #3ea6ff;
-      --text-primary: #f1f1f1;
-      --text-secondary: #aaaaaa;
-      --text-faint: #666666;
-      --accent-like: #3ea6ff;
-      --accent-dislike: #aaaaaa;
-      --avatar-grey: #444444;
-      --avatar-red: #8b0000;
-      --avatar-blue: #003366;
+      --bg-main: #0a0a0a;
+      --accent-pink: #ff72c6;
+      --accent-cyan: #46e6ff;
+      --accent-gold: #ffd87a;
+      --text-main: #f5f5f7;
+      --text-muted: #9b9bb1;
+      --danger: #ff5b6b;
     }
 
     * {
@@ -27,945 +21,834 @@
       padding: 0;
     }
 
+    html,
     body {
-      background-color: var(--bg-main);
-      color: var(--text-primary);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-      -webkit-font-smoothing: antialiased;
+      height: 100%;
+      background: radial-gradient(circle at top, #15152a 0, #05050a 40%, #000 100%);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Helvetica Neue", Arial, sans-serif;
+      overscroll-behavior: none;
     }
 
-    .comment-embed {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 12px 12px 24px;
-      background-color: var(--bg-main);
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
     }
 
-    .section-header {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 10px;
+    .tiktok-shell {
+      width: 100%;
+      max-width: 540px;
+      height: 100vh;
+      background:
+        radial-gradient(circle at 10% -10%, rgba(255, 114, 198, 0.2) 0, transparent 40%),
+        radial-gradient(circle at 90% 110%, rgba(70, 230, 255, 0.15) 0, transparent 45%),
+        var(--bg-main);
+      position: relative;
+      overflow: hidden;
     }
 
-    .pinned-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
+    .tiktok-shell::before,
+    .tiktok-shell::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255, 182, 255, 0.16) 0, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(150, 220, 255, 0.12) 0, transparent 45%);
+      mix-blend-mode: screen;
+      opacity: 0.6;
+      z-index: 0;
     }
 
-    .pinned-label::before {
-      content: "📌";
-      font-size: 12px;
+    .feed {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
 
-    .pinned-list {
+    .feed::-webkit-scrollbar {
+      display: none;
+    }
+
+    .feed-item,
+    .feed-end {
+      scroll-snap-align: start;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 14px;
+      justify-content: space-between;
+      padding: 14px 10px 18px;
+      position: relative;
     }
 
-    .comment-card {
+    @media (min-width: 480px) {
+      .feed-item,
+      .feed-end {
+        padding: 18px 16px 22px;
+      }
+    }
+
+    /* 9:16 竖屏视频区域（无额外黑色边框） */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 75vh;
+      max-height: 75vh;
       display: flex;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
 
-    .comment-card:last-of-type {
-      border-bottom: none;
+    .video-wrapper-inner {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 9 / 16;
+      margin: 0 auto;
+      background: radial-gradient(circle at 20% 0, #25254a 0, #11111f 32%, #020206 100%);
+      border-radius: 0;
+      border: none;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-main);
+      isolation: isolate;
+    }
+
+    .video-wrapper.anime-border .video-wrapper-inner {
+      background:
+        linear-gradient(135deg, rgba(255, 114, 198, 0.25), rgba(70, 230, 255, 0.16))
+          border-box;
+    }
+
+    .video-inner {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0, #181828 0, #05050b 40%, #000 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 14px;
+    }
+
+    .video-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(120deg, rgba(0, 0, 0, 0.8), rgba(15, 15, 30, 0.98));
+      padding: 6px 10px;
+      border-radius: 999px;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.9);
+    }
+
+    .video-label-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--danger);
+      box-shadow: 0 0 10px var(--danger);
+    }
+
+    .video-play {
+      align-self: center;
+      text-align: center;
+      color: var(--text-main);
+    }
+
+    .play-icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+      box-shadow:
+        0 0 25px rgba(255, 114, 198, 0.5),
+        0 0 45px rgba(70, 230, 255, 0.4);
+      background: radial-gradient(circle at 30% 0, #ffffff 0, #d4d4ff 20%, #111125 65%);
+    }
+
+    .play-icon::before {
+      content: "";
+      border-style: solid;
+      border-width: 11px 0 11px 18px;
+      border-color: transparent transparent transparent #0a1020;
+      margin-left: 4px;
+    }
+
+    .play-caption {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    /* 文本区域底部渐变（在 caption 背后） */
+    .bottom-bar {
+      position: relative;
+      height: calc(25vh - 10px);
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 6px;
+      padding: 6px 4px 0;
+    }
+
+    .bottom-bar::before {
+      content: "";
+      position: absolute;
+      left: -16px;
+      right: -16px;
+      bottom: -18px;
+      height: 120%;
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.9) 0,
+        rgba(0, 0, 0, 0.7) 35%,
+        transparent 100%
+      );
+      z-index: -1;
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .user-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
 
     .avatar {
-      flex: 0 0 36px;
-      height: 36px;
-      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 0, #ffeecc 0, #ff9b73 30%, #541a1a 70%);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 0 16px rgba(255, 230, 170, 0.85);
+      flex-shrink: 0;
+    }
+
+    .avatar.news {
+      background: radial-gradient(circle at 20% 0, #fffff0 0, #ffcf73 25%, #b8622b 60%, #341616 100%);
+    }
+
+    .avatar.podcast {
+      background: radial-gradient(circle at 30% 0, #ffffff 0, #a5b7ff 30%, #202046 70%);
+    }
+
+    .avatar.anonymous {
+      background: none;
+      border: 1px solid rgba(180, 180, 190, 0.55);
+      box-shadow: none;
+    }
+
+    .avatar.anonymous::before {
+      content: "";
+      width: 70%;
+      height: 70%;
+      border-radius: 999px;
+      background: rgba(140, 140, 150, 0.45);
+      display: block;
+      margin: 15%;
+    }
+
+    .user-handle {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 12px;
+      gap: 4px;
+      min-width: 0;
       font-weight: 600;
       color: #ffffff;
-      margin-right: 10px;
-    }
-
-    .avatar-red {
-      background: var(--avatar-red);
-    }
-
-    .avatar-blue {
-      background: var(--avatar-blue);
-    }
-
-    .avatar-grey {
-      background: var(--avatar-grey);
-    }
-
-    .comment-main {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .comment-header-line {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-      font-size: 12px;
     }
 
     .username {
-      font-weight: 500;
-      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
     }
 
-    .meta-dot {
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background-color: var(--text-faint);
-    }
-
-    .meta-text {
-      font-size: 11px;
-      color: var(--text-faint);
-    }
-
-    .pinned-tag {
-      font-size: 11px;
-      color: var(--accent-like);
-    }
-
-    .comment-text {
-      font-size: 13px;
-      line-height: 1.45;
-      white-space: pre-line;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-    }
-
-    .comment-actions {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .action {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .action span.icon {
-      font-size: 13px;
-    }
-
-    .action-like span.icon {
-      color: var(--accent-like);
-    }
-
-    .action-dislike span.icon {
-      color: var(--accent-dislike);
-    }
-
-    .comment-count {
-      font-size: 13px;
-      color: var(--text-secondary);
-      padding: 10px 0 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.04);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .comment-count-icon {
-      font-size: 16px;
-    }
-
-    /* Input choices */
-
-    .input-area {
-      padding-top: 14px;
-      padding-bottom: 18px;
-    }
-
-    .input-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .input-subtitle {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-    }
-
-    .choice-groups {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .choice-group {
-      background-color: var(--bg-elevated);
-      border-radius: 10px;
-      padding: 10px 10px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .choice-group-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    .choice-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .choice-button {
-      width: 100%;
-      font-size: 13px;
-      text-align: left;
-      background-color: var(--bg-elevated-soft);
-      color: var(--text-primary);
-      border-radius: 8px;
-      border: 1px solid var(--border-muted);
-      padding: 8px 9px;
-      line-height: 1.4;
-      cursor: pointer;
-      outline: none;
-      transition: background-color 0.15s ease, border-color 0.15s ease,
-        transform 0.05s ease;
-      display: block;
-    }
-
-    .choice-button:active {
-      transform: scale(0.99);
-    }
-
-    .choice-button.selected {
-      border-color: var(--border-active);
-      background-color: #242424;
-    }
-
-    .choice-button:hover {
-      border-color: #414141;
-    }
-
-    .send-container {
-      margin-top: 8px;
-      display: flex;
-      justify-content: flex-start;
-    }
-
-    .send-button {
+    .verified {
+      width: 16px;
+      height: 16px;
       border-radius: 999px;
-      border: none;
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #0f0f0f;
-      background-color: #f1f1f1;
-      cursor: pointer;
+      background: radial-gradient(circle at 30% 0, #ffffff 0, #a4f0ff 40%, #008cff 90%);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      transition: background-color 0.15s ease, transform 0.05s ease;
+      justify-content: center;
+      font-size: 10px;
+      color: #001224;
+      box-shadow:
+        0 0 12px rgba(70, 230, 255, 0.9),
+        0 0 20px rgba(0, 140, 255, 0.9);
     }
 
-    .send-button:active {
-      transform: scale(0.97);
-      background-color: #dddddd;
+    .user-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
     }
 
-    .send-button span.icon {
-      font-size: 14px;
+    .comments-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(120deg, rgba(40, 40, 50, 0.9), rgba(12, 12, 20, 0.9));
+      color: var(--text-muted);
     }
 
-    /* User comment + replies */
-
-    .user-thread {
-      padding-top: 4px;
-      padding-bottom: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.04);
-    }
-
-    .user-main-comment {
-      padding-top: 6px;
-      padding-bottom: 2px;
-    }
-
-    .reply-list {
-      margin-left: 46px;
-      border-left: 1px solid rgba(255, 255, 255, 0.06);
-      padding-left: 10px;
+    .caption-row {
       margin-top: 4px;
       display: flex;
-      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .caption-text {
+      flex: 1 1 auto;
+      color: #f5f5f7;
+    }
+
+    .line-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .caption-more {
+      flex-shrink: 0;
+      margin-left: 4px;
+      font-size: 12px;
+      color: var(--accent-cyan);
+      text-transform: lowercase;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .caption-more:active {
+      opacity: 0.7;
+    }
+
+    .stats-row {
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .stat-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: var(--text-muted);
+    }
+
+    .stat {
+      display: inline-flex;
+      align-items: center;
       gap: 4px;
     }
 
-    .reply-card {
-      display: flex;
-      padding: 6px 0;
+    .stat-icon {
+      font-size: 13px;
     }
 
-    .reply-avatar {
-      flex: 0 0 26px;
-      height: 26px;
-      border-radius: 50%;
-      background-color: var(--avatar-grey);
+    .stat.special {
+      color: var(--danger);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 11px;
+    }
+
+    .locked-text {
+      color: var(--danger);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 11px;
+    }
+
+    /* 第 5 条：全黑背景 + 等宽文字 */
+    .video-wrapper.terminal .video-wrapper-inner {
+      background: #000;
+      border: none;
+      box-shadow: none;
+    }
+
+    .terminal-inner {
+      position: absolute;
+      inset: 0;
+      padding: 22px 22px 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      color: #ffffff;
-      margin-right: 8px;
+      background: radial-gradient(circle at 10% 0, #111 0, #000 55%);
     }
 
-    .reply-main {
-      flex: 1;
-      min-width: 0;
+    .terminal-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 13px;
+      color: #f5f5f5;
+      white-space: pre;
+      text-align: left;
+      line-height: 1.6;
+      text-shadow: 0 0 8px rgba(0, 255, 170, 0.4);
     }
 
-    .reply-header-line {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 2px;
-      font-size: 11px;
-    }
-
-    .reply-text {
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: pre-line;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .reply-actions {
-      font-size: 11px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .more-replies-text {
-      font-size: 12px;
-      color: var(--text-faint);
-      margin-top: 4px;
-    }
-
-    /* Top notification */
-
-    .top-notice {
-      position: fixed;
+    /* 播客项的付费锁定遮罩（只在视频内部底部） */
+    .paywall {
+      position: absolute;
       left: 0;
       right: 0;
-      top: 0;
-      z-index: 50;
+      bottom: 0;
+      height: 34%;
+      padding: 14px 16px 18px;
       display: flex;
-      justify-content: center;
-      pointer-events: none;
+      align-items: flex-end;
+      z-index: 2;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(
+        to top,
+        rgba(4, 4, 8, 0.95) 0,
+        rgba(10, 10, 22, 0.88) 40%,
+        rgba(10, 10, 34, 0.3) 100%
+      );
     }
 
-    .top-notice-inner {
-      margin-top: 8px;
-      background-color: rgba(24, 24, 24, 0.98);
-      color: var(--text-primary);
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      transform: translateY(-120%);
-      opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .paywall-inner {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 0 0, #ffd87a 0, #ff72c6 45%, #8251ff 100%);
+      box-shadow: 0 0 22px rgba(255, 114, 198, 0.9);
+      color: #0b0712;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
     }
 
-    .top-notice-inner.show {
-      transform: translateY(0);
+    .paywall-lock {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    /* 终屏 */
+    .feed-end {
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      position: relative;
+    }
+
+    .feed-end::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      transition: opacity 1.1s ease;
+    }
+
+    .feed-end.visible::before {
       opacity: 1;
     }
 
-    .top-notice-icon {
-      font-size: 14px;
-    }
-
-    /* Bottom hint */
-
-    .continue-hint {
-      font-size: 11px;
+    .end-text {
+      position: relative;
+      z-index: 1;
+      color: #f5f5f7;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.24em;
+      opacity: 0;
+      transform: translateY(10px);
       text-align: center;
-      color: var(--text-faint);
-      padding-top: 16px;
     }
 
-    @media (min-width: 600px) {
-      .comment-embed {
-        padding-left: 16px;
-        padding-right: 16px;
+    .feed-end.visible .end-text {
+      animation: endTextFade 1.3s ease forwards 0.9s;
+    }
+
+    @keyframes endTextFade {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   </style>
 </head>
 <body>
-  <!-- Top like-notification (hidden by default) -->
-  <div class="top-notice" aria-live="polite">
-    <div class="top-notice-inner" id="likeNotification">
-      <span class="top-notice-icon">🔔</span>
-      <span id="likeNotificationText"></span>
-    </div>
-  </div>
+  <div class="tiktok-shell">
+    <div class="feed">
 
-  <div class="comment-embed">
-    <!-- Pinned comments section -->
-    <div class="section-header">
-      Comments · Mga komento
-    </div>
-    <div class="pinned-label">Pinned comments</div>
-
-    <div class="pinned-list" id="pinnedComments">
-      <!-- Pinned Comment A -->
-      <div class="comment-card">
-        <div class="avatar avatar-red">
-          RM
-        </div>
-        <div class="comment-main">
-          <div class="comment-header-line">
-            <span class="username">@rodel_m</span>
-            <span class="meta-dot"></span>
-            <span class="meta-text">3 hours ago · 3 oras na</span>
-            <span class="meta-dot"></span>
-            <span class="pinned-tag">Pinned · naka-pin</span>
-          </div>
-          <div class="comment-text">
-The Dalton family has held that senate seat for three generations.
-In the 2028 typhoon, five thousand people died.
-The flood control money went somewhere else. Did any court touch them? No.
-So now someone else delivered a verdict. I don't call this murder,
-I call it justice delayed — finally paid in full.
-          </div>
-          <div class="comment-actions">
-            <div class="action action-like">
-              <span class="icon">👍</span>
-              <span>340K</span>
-            </div>
-            <div class="action action-dislike">
-              <span class="icon">👎</span>
+      <!-- ITEM 1 — News broadcast -->
+      <section class="feed-item">
+        <div class="video-wrapper anime-border">
+          <div class="video-wrapper-inner">
+            <div class="video-inner">
+              <div class="video-label">
+                <span class="video-label-dot"></span>
+                <span>NEWS ANCHOR — 10s</span>
+                <span style="opacity:.6;">• Metro Manila • PH</span>
+              </div>
+              <div class="video-play">
+                <div class="play-icon"></div>
+                <div class="play-caption">Breaking evening bulletin</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Pinned Comment B -->
-      <div class="comment-card">
-        <div class="avatar avatar-blue">
-          CL
-        </div>
-        <div class="comment-main">
-          <div class="comment-header-line">
-            <span class="username">@claire_luz</span>
-            <span class="meta-dot"></span>
-            <span class="meta-text">5 hours ago · 5 oras na</span>
-            <span class="meta-dot"></span>
-            <span class="pinned-tag">Pinned · naka-pin</span>
-          </div>
-          <div class="comment-text">
-I hate Dalton same as all of you. But that eight‑year‑old girl
-has a birthday today. What did she steal?
-If we cheer for this, what is the difference
-between us and the killer's logic —
-as long as I think you deserve to die, then you can die?
-Today it's Dalton. Bukas, sino na?
-          </div>
-          <div class="comment-actions">
-            <div class="action action-like">
-              <span class="icon">👍</span>
-              <span>210K</span>
-            </div>
-            <div class="action action-dislike">
-              <span class="icon">👎</span>
+        <div class="bottom-bar">
+          <div class="user-row">
+            <div class="user-main">
+              <div class="avatar news"></div>
+              <div>
+                <div class="user-handle">
+                  <span class="username">@GMANewsOfficial</span>
+                  <span class="verified">✔</span>
+                </div>
+                <div class="user-meta">National newscast • Philippines</div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Pinned Comment C -->
-      <div class="comment-card">
-        <div class="avatar avatar-grey">
-          ??
-        </div>
-        <div class="comment-main">
-          <div class="comment-header-line">
-            <span class="username">@anonymous_ph</span>
-            <span class="meta-dot"></span>
-            <span class="meta-text">8 hours ago · 8 oras na</span>
-            <span class="meta-dot"></span>
-            <span class="pinned-tag">Pinned · naka-pin</span>
+          <div class="caption-row">
+            <p class="caption-text line-clamp">
+              47 confirmed dead in Dalton mansion massacre. Senator, family, guests, staff — none
+              survived. Police have sealed the compound.
+            </p>
+            <button class="caption-more" type="button">...more</button>
           </div>
-          <div class="comment-text">
-Stop arguing. Forty‑seven people, not one got out.
-No strange alarms, no surviving witnesses, no early calls to the police.
-This was not some random private revenge, this was an operation.
-As for who could do it — in this country, konti lang ang may ganoong resources.
-You already know the list.
-          </div>
-          <div class="comment-actions">
-            <div class="action action-like">
-              <span class="icon">👍</span>
-              <span>270K</span>
+
+          <div class="stats-row">
+            <div class="stat-group">
+              <span class="stat">
+                <span class="stat-icon">👍</span><span>2.1M</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">💬</span><span>890K</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">↗</span><span>1.56M</span>
+              </span>
             </div>
-            <div class="action action-dislike">
-              <span class="icon">👎</span>
+            <span class="user-meta">FOR YOU • PH</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ITEM 2 — Political commentator -->
+      <section class="feed-item">
+        <div class="video-wrapper anime-border">
+          <div class="video-wrapper-inner">
+            <div class="video-inner">
+              <div class="video-label">
+                <span class="video-label-dot"></span>
+                <span>POLITICAL BLOGGER — 10s</span>
+                <span style="opacity:.6;">• Quezon City • PH</span>
+              </div>
+              <div class="video-play">
+                <div class="play-icon"></div>
+                <div class="play-caption">Late-night reaction stream</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Comment count display -->
-    <div class="comment-count" aria-live="polite">
-      <span class="comment-count-icon">💬</span>
-      <span id="commentCountText">1,247,893 comments (updating live)</span>
-    </div>
+        <div class="bottom-bar">
+          <div class="user-row">
+            <div class="user-main">
+              <div class="avatar"></div>
+              <div>
+                <div class="user-handle">
+                  <span class="username">@PoliticalPulsePH</span>
+                </div>
+                <div class="user-meta">Political commentary • Philippines</div>
+              </div>
+            </div>
+          </div>
 
-    <!-- Input area (reachable by scroll) -->
-    <div class="input-area" id="inputArea">
-      <div class="input-title">What do you think? Pili ka ng side:</div>
-      <div class="input-subtitle">
-        Choose your stance, then send your comment.
-      </div>
+          <div class="caption-row">
+            <p class="caption-text line-clamp">
+              This wasn't a grudge killing. Even the dog. This was a clean sweep. Someone just
+              declared war on everything the Dalton name stands for.
+            </p>
+            <button class="caption-more" type="button">...more</button>
+          </div>
 
-      <div class="choice-groups">
-        <!-- Group A -->
-        <div class="choice-group">
-          <div class="choice-group-title">Reckoning · 清算</div>
-          <div class="choice-buttons">
-            <button class="choice-button" data-choice="A1">
-              The law protected them for twenty years. Now something else answered.
-            </button>
-            <button class="choice-button" data-choice="A2">
-              Only regret is that not enough of them died.
-            </button>
-            <button class="choice-button" data-choice="A3">
-              I feel sorry for that child — but I feel even more
-              for the five thousand kids who died in the typhoon.
-            </button>
+          <div class="stats-row">
+            <div class="stat-group">
+              <span class="stat">
+                <span class="stat-icon">👍</span><span>670K</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">💬</span><span>340K</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">↗</span><span>210K</span>
+              </span>
+            </div>
+            <span class="user-meta">OPINION • PH</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ITEM 3 — Citizen footage -->
+      <section class="feed-item">
+        <div class="video-wrapper anime-border">
+          <div class="video-wrapper-inner">
+            <div class="video-inner">
+              <div class="video-label">
+                <span class="video-label-dot"></span>
+                <span>CITIZEN FOOTAGE — 10s</span>
+                <span style="opacity:.6;">• Near Dalton compound • PH</span>
+              </div>
+              <div class="video-play">
+                <div class="play-icon"></div>
+                <div class="play-caption">Phone camera • shaky</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Group B -->
-        <div class="choice-group">
-          <div class="choice-group-title">Process · Due process</div>
-          <div class="choice-buttons">
-            <button class="choice-button" data-choice="B1">
-              The killer fought injustice with violence, but created a new injustice.
-            </button>
-            <button class="choice-button" data-choice="B2">
-              If you clap for this today, you lose the right
-              to complain about the next violence.
-            </button>
-            <button class="choice-button" data-choice="B3">
-              That eight‑year‑old girl never voted,
-              and never chose who her father was.
-            </button>
+        <div class="bottom-bar">
+          <div class="user-row">
+            <div class="user-main">
+              <div class="avatar"></div>
+              <div>
+                <div class="user-handle">
+                  <span class="username">@user_83920</span>
+                </div>
+                <div class="user-meta">Nearby resident • Philippines</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="caption-row">
+            <p class="caption-text line-clamp">
+              I just came from that area — tape three streets back. Three streets. I've never seen
+              anything like this...
+            </p>
+            <button class="caption-more" type="button">...more</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-group">
+              <span class="stat">
+                <span class="stat-icon">👍</span><span>230K</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">💬</span><span>180K</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">↗</span><span>95K</span>
+              </span>
+            </div>
+            <span class="user-meta">ON THE GROUND • PH</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ITEM 4 — Podcast clip with paywall -->
+      <section class="feed-item">
+        <div class="video-wrapper anime-border">
+          <div class="video-wrapper-inner">
+            <div class="video-inner">
+              <div class="video-label">
+                <span class="video-label-dot"></span>
+                <span>PODCAST CLIP — 10s</span>
+                <span style="opacity:.6;">• Makati studio • PH</span>
+              </div>
+              <div class="video-play">
+                <div class="play-icon"></div>
+                <div class="play-caption">Studio cam • longform</div>
+              </div>
+            </div>
+
+            <div class="paywall">
+              <div class="paywall-inner">
+                <span class="paywall-lock">🔒</span>
+                <span>Subscribe to unlock</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Group C -->
-        <div class="choice-group">
-          <div class="choice-group-title">Sidelines · 旁观</div>
-          <div class="choice-buttons">
-            <button class="choice-button" data-choice="C1">
-              Powerful people killing powerful people — anong kinalaman namin diyan.
-            </button>
-            <button class="choice-button" data-choice="C2">
-              This country has always been like this.
-            </button>
-            <button class="choice-button" data-choice="C3">
-              Whoever did it, give it one week and everybody moves on.
-            </button>
+        <div class="bottom-bar">
+          <div class="user-row">
+            <div class="user-main">
+              <div class="avatar podcast"></div>
+              <div>
+                <div class="user-handle">
+                  <span class="username">@ThePowerBrokerPodcast</span>
+                </div>
+                <div class="user-meta">Power & patronage • PH</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="caption-row">
+            <p class="caption-text line-clamp">
+              Dalton's top five enemies — who actually has the resources to pull this off? The first
+              name anyone's going to look at is—
+            </p>
+            <button class="caption-more" type="button">...more</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-group">
+              <span class="stat">
+                <span class="stat-icon">👍</span><span>450K</span>
+              </span>
+              <span class="stat locked-text">
+                <span class="stat-icon">💬</span><span>locked</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">↗</span><span>88K</span>
+              </span>
+            </div>
+            <span class="user-meta">PREMIUM • PH</span>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- User thread will be injected here -->
-    <div id="userThreadContainer"></div>
+      <!-- ITEM 5 — Anonymous account, no video -->
+      <section class="feed-item">
+        <div class="video-wrapper terminal">
+          <div class="video-wrapper-inner">
+            <div class="terminal-inner">
+              <div class="terminal-text">
+2028 typhoon death toll:     5,243
+Flood fund deficit:          ₱23 billion
+Dalton tenure:               2019 – 2031
+Deaths confirmed today:      47
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <!-- Bottom hint -->
-    <div class="continue-hint">
-      继续阅读 ↓ · keep reading
+        <div class="bottom-bar">
+          <div class="user-row">
+            <div class="user-main">
+              <div class="avatar anonymous"></div>
+              <div>
+                <div class="user-handle">
+                  <span class="username">@000000000</span>
+                </div>
+                <div class="user-meta">Signal lost • Philippines</div>
+              </div>
+            </div>
+            <span class="comments-badge">COMMENTS DISABLED</span>
+          </div>
+
+          <div class="caption-row">
+            <p class="caption-text line-clamp">
+              Numbers don't trend. They accumulate.
+            </p>
+            <button class="caption-more" type="button">...more</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-group">
+              <span class="stat">
+                <span class="stat-icon">👍</span><span>1.89M</span>
+              </span>
+              <span class="stat special">
+                <span class="stat-icon">💬</span><span>COMMENTS DISABLED</span>
+              </span>
+              <span class="stat">
+                <span class="stat-icon">↗</span><span>2.1M</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- END SCREEN — fade to black, then text -->
+      <section class="feed-end">
+        <div class="end-text">scroll to continue</div>
+      </section>
     </div>
   </div>
 
   <script>
-    (function () {
-      // COMMENT COUNT UPDATER
-      const countEl = document.getElementById("commentCountText");
-      let baseCount = 1247893;
-
-      function formatNumber(num) {
-        return num.toLocaleString("en-US");
-      }
-
-      function updateCommentCount() {
-        const inc = Math.floor(Math.random() * 5) + 1; // 1-5
-        baseCount += inc;
-        if (countEl) {
-          countEl.textContent =
-            formatNumber(baseCount) + " comments (updating live)";
-        }
-      }
-
-      setInterval(updateCommentCount, 3000);
-
-      // CHOICE SELECTION + INLINE SEND BUTTON
-      const choiceButtons = Array.from(
-        document.querySelectorAll(".choice-button")
-      );
-      const userThreadContainer = document.getElementById(
-        "userThreadContainer"
-      );
-      const likeNotification = document.getElementById("likeNotification");
-      const likeNotificationText = document.getElementById(
-        "likeNotificationText"
-      );
-
-      let currentChoice = null;
-      let activeSendContainer = null;
-      let notificationTimeoutId = null;
-
-      // REPLY DATA
-      const replyMap = {
-        A1: {
-          agree: {
-            username: "@ph_user_4421",
-            text:
-              "Bro, you said what I wanted to say. Two investigations, and every time they walked away clean.",
-          },
-          disagree: {
-            username: "@concerned_citizen",
-            text:
-              "So whoever has the gun, siya na ang batas?\nWhat happens when the next guy with a gun decides he doesn't like you?",
-          },
-        },
-        A2: {
-          agree: {
-            username: "@wind_victim_2028",
-            text:
-              "You're saying what a lot of us are too afraid to type.",
-          },
-          disagree: {
-            username: "@lawstudent_ph",
-            text:
-              "Do you hear yourself right now? This is how justice dies, quietly, in the comments.",
-          },
-        },
-        A3: {
-          agree: {
-            username: "@mama_of_3",
-            text:
-              "This is the real wound — one tragedy piled on top of another.",
-          },
-          disagree: {
-            username: "@rodel_m",
-            text:
-              "Two kinds of grief don't cancel each other out. They just both hurt.",
-          },
-        },
-        B1: {
-          agree: {
-            username: "@philosophy_nerd",
-            text:
-              "This is the hard question we should be arguing about, not just cheering or booing.",
-          },
-          disagree: {
-            username: "@typhoon_survivor",
-            text:
-              "Easy to say. If your family died in that typhoon, would you still talk about theory like this?",
-          },
-        },
-        B2: {
-          agree: {
-            username: "@teacher_minda",
-            text:
-              "Clear logic. Kung ganyan ang standard, mas safe tayong lahat.",
-          },
-          disagree: {
-            username: "@frustrated_ph",
-            text:
-              "Nice in theory. But in real life, justice only moves when someone bleeds.",
-          },
-        },
-        B3: {
-          agree: {
-            username: "@human_rights_ph",
-            text:
-              "Finally someone remembers the kid instead of just the senator's name.",
-          },
-          disagree: {
-            username: "@angry_voter",
-            text:
-              "Her father spent twenty years stealing in her name. You think that didn't affect her life?",
-          },
-        },
-        C1: {
-          agree: {
-            username: "@just_living_ph",
-            text:
-              "Exactly. Let the giants kill each other. We still have work tomorrow.",
-          },
-          disagree: {
-            username: "@wake_up_ph",
-            text:
-              "You think it has nothing to do with you only because it's not your turn yet.",
-          },
-        },
-        C2: {
-          agree: {
-            username: "@tired_voter",
-            text:
-              "Too real. Same show, different season.",
-          },
-          disagree: {
-            username: "@idealist_ph",
-            text:
-              "This kind of thinking is exactly why nothing changes. Napagod ka bago pa magsimula.",
-          },
-        },
-        C3: {
-          agree: {
-            username: "@pragmatic_ph",
-            text:
-              "History says you're right — the news cycle moves on, the families stay behind.",
-          },
-          disagree: {
-            username: "@memory_ph",
-            text:
-              "5,243 families are not going to forget. Even if the timeline does.",
-          },
-        },
-      };
-
-      function randomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-      }
-
-      function smallLikeCount() {
-        return randomInt(0, 9); // 0–9 likes
-      }
-
-      function showLikeNotification() {
-        const likes = randomInt(2, 12);
-        if (likeNotificationText) {
-          likeNotificationText.textContent =
-            "Your comment just got " + likes + " likes";
-        }
-        if (likeNotification) {
-          likeNotification.classList.add("show");
-          if (notificationTimeoutId) {
-            clearTimeout(notificationTimeoutId);
-          }
-          notificationTimeoutId = setTimeout(() => {
-            likeNotification.classList.remove("show");
-          }, 3000);
-        }
-      }
-
-      function createReplyCard(data, timeLabel) {
-        const card = document.createElement("div");
-        card.className = "reply-card";
-        card.innerHTML = `
-          <div class="reply-avatar">PH</div>
-          <div class="reply-main">
-            <div class="reply-header-line">
-              <span class="username">${data.username}</span>
-              <span class="meta-dot"></span>
-              <span class="meta-text">${timeLabel}</span>
-            </div>
-            <div class="reply-text">
-${data.text.trim()}
-            </div>
-            <div class="reply-actions">
-              <span class="action action-like">
-                <span class="icon">👍</span>
-                <span>${smallLikeCount()}</span>
-              </span>
-            </div>
-          </div>
-        `;
-        return card;
-      }
-
-      function buildUserThread(choiceKey, selectedText) {
-        const replyData = replyMap[choiceKey];
-        if (!replyData) return null;
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "user-thread";
-        wrapper.id = "userThread";
-
-        const userLikes = smallLikeCount();
-
-        wrapper.innerHTML = `
-          <div class="comment-card user-main-comment">
-            <div class="avatar avatar-grey">
-              U
-            </div>
-            <div class="comment-main">
-              <div class="comment-header-line">
-                <span class="username">@ikaw_now</span>
-                <span class="meta-dot"></span>
-                <span class="meta-text">Just now · kakapost lang</span>
-              </div>
-              <div class="comment-text">
-${selectedText.trim()}
-              </div>
-              <div class="comment-actions">
-                <div class="action action-like">
-                  <span class="icon">👍</span>
-                  <span>${userLikes}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="reply-list" id="userReplyList"></div>
-        `;
-
-        return wrapper;
-      }
-
-      function scrollToElement(el) {
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const offset = window.scrollY + rect.top - 60;
-        window.scrollTo({
-          top: offset,
-          behavior: "smooth",
-        });
-      }
-
-      // 为每个选项按钮挂载点击：选中 + 在该按钮后插入发送按钮
-      choiceButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          // 切换选中态
-          choiceButtons.forEach((b) => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          currentChoice = btn.getAttribute("data-choice");
-
-          // 移除旧的发送容器
-          if (activeSendContainer && activeSendContainer.parentNode) {
-            activeSendContainer.parentNode.removeChild(activeSendContainer);
-          }
-
-          // 新建发送容器，插在当前按钮后面
-          const container = document.createElement("div");
-          container.className = "send-container";
-          container.innerHTML = `
-            <button class="send-button">
-              <span class="icon">📤</span>
-              <span>Send · Ipadala</span>
-            </button>
-          `;
-
-          // 插入 DOM：在该按钮之后
-          const parent = btn.parentNode;
-          if (parent) {
-            if (btn.nextSibling) {
-              parent.insertBefore(container, btn.nextSibling);
-            } else {
-              parent.appendChild(container);
-            }
-          }
-          activeSendContainer = container;
-
-          const sendButton = container.querySelector(".send-button");
-          if (sendButton) {
-            sendButton.addEventListener("click", () => {
-              const choiceKey = currentChoice;
-              if (!choiceKey) return;
-
-              const selectedText =
-                btn.innerText || btn.textContent || "";
-
-              // 清理发送按钮本身，以免重复点击
-              if (activeSendContainer && activeSendContainer.parentNode) {
-                activeSendContainer.parentNode.removeChild(
-                  activeSendContainer
-                );
-                activeSendContainer = null;
-              }
-
-              // 移除已有用户线程
-              const existing = document.getElementById("userThread");
-              if (existing && existing.parentNode) {
-                existing.parentNode.removeChild(existing);
-              }
-
-              const threadEl = buildUserThread(choiceKey, selectedText);
-              if (!threadEl) return;
-
-              if (userThreadContainer) {
-                userThreadContainer.appendChild(threadEl);
-              }
-
-              const replyList = threadEl.querySelector("#userReplyList");
-              const replyData = replyMap[choiceKey];
-
-              if (replyList && replyData) {
-                // 1 秒后出现第一个回复
-                setTimeout(() => {
-                  const agreeCard = createReplyCard(
-                    replyData.agree,
-                    "1 hour ago"
-                  );
-                  replyList.appendChild(agreeCard);
-                }, 1000);
-
-                // 2 秒后出现第二个回复 + “更多回复”文案
-                setTimeout(() => {
-                  const disagreeCard = createReplyCard(
-                    replyData.disagree,
-                    "45 min ago"
-                  );
-                  replyList.appendChild(disagreeCard);
-
-                  const moreRepliesCount = randomInt(40, 200);
-                  const more = document.createElement("div");
-                  more.className = "more-replies-text";
-                  more.textContent =
-                    "More " +
-                    moreRepliesCount +
-                    " replies · display only";
-                  replyList.appendChild(more);
-                }, 2000);
-              }
-
-              scrollToElement(threadEl);
-              showLikeNotification();
-            });
-          }
-        });
+    // 文案「...more」展开：取消 2 行截断，隐藏按钮
+    document.querySelectorAll(".caption-more").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var caption = btn.previousElementSibling;
+        caption.classList.remove("line-clamp");
+        btn.style.display = "none";
       });
+    });
+
+    // 终屏：滚到最后一屏时，淡入黑，再淡入文字
+    (function () {
+      var endSection = document.querySelector(".feed-end");
+      if (!("IntersectionObserver" in window) || !endSection) return;
+
+      var observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              endSection.classList.add("visible");
+              observer.unobserve(endSection);
+            }
+          });
+        },
+        { threshold: 0.6 }
+      );
+
+      observer.observe(endSection);
     })();
   </script>
 </body>
 </html>
+
