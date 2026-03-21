@@ -263,7 +263,12 @@
           }
         }, 100);
 
-        audio.onended = cleanup;
+        audio.onended = function () {
+          cleanup();
+          try {
+            window.parent.postMessage({ type: 'S13_AUDIO_ENDED' }, '*');
+          } catch (e) {}
+        };
         audio.onerror = () => {
           cleanup();
           fallback.style.display = 'block';
