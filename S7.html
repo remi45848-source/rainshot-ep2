@@ -812,10 +812,6 @@ Deaths confirmed today:      47
         </div>
       </section>
 
-      <!-- END SCREEN — fade to black, then text -->
-      <section class="feed-end">
-        <div class="end-text"></div>
-      </section>
     </div>
   </div>
 
@@ -829,25 +825,6 @@ Deaths confirmed today:      47
       });
     });
 
-    // 终屏：滚到最后一屏时，淡入黑，再淡入文字
-    (function () {
-      var endSection = document.querySelector(".feed-end");
-      if (!("IntersectionObserver" in window) || !endSection) return;
-
-      var observer = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-              endSection.classList.add("visible");
-              observer.unobserve(endSection);
-            }
-          });
-        },
-        { threshold: 0.6 }
-      );
-
-      observer.observe(endSection);
-    })();
   </script>
 </body>
 </html>
