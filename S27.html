@@ -55,6 +55,13 @@
       padding: 16px 0;
       border-bottom: 1px solid #2f3336;
       position: relative;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .trend-item.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .trend-item:last-child {
@@ -132,7 +139,7 @@
   <div class="trending-component">
     <header class="trending-header">
       <h1 class="trending-title">Trends for you</h1>
-      <p class="trending-meta">Philippines · 23:51</p>
+      <p class="trending-meta">Philippines · 00:09</p>
     </header>
 
     <ul class="trend-list">
@@ -140,7 +147,7 @@
         <div class="trend-content">
           <div class="trend-category">Entertainment · Trending</div>
           <div class="trend-topic">#SB19WorldTour</div>
-          <div class="trend-posts-row">4.1M posts</div>
+          <div class="trend-posts-row">4.3M posts</div>
         </div>
         <div class="trend-menu" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
@@ -151,7 +158,7 @@
         <div class="trend-content">
           <div class="trend-category">Entertainment · Trending</div>
           <div class="trend-topic">#ItsShowtime</div>
-          <div class="trend-posts-row">2.9M posts</div>
+          <div class="trend-posts-row">3.2M posts</div>
         </div>
         <div class="trend-menu" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
@@ -162,7 +169,7 @@
         <div class="trend-content">
           <div class="trend-category">Weather</div>
           <div class="trend-topic">#ManilaWeather</div>
-          <div class="trend-posts-row">678K posts</div>
+          <div class="trend-posts-row">702K posts</div>
         </div>
         <div class="trend-menu" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
@@ -173,7 +180,7 @@
         <div class="trend-content">
           <div class="trend-category">Food · Trending</div>
           <div class="trend-topic">#NightMarketMNL</div>
-          <div class="trend-posts-row">445K posts</div>
+          <div class="trend-posts-row">466K posts</div>
         </div>
         <div class="trend-menu" aria-hidden="true">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
@@ -185,7 +192,7 @@
           <div class="trend-category">News</div>
           <div class="trend-topic topic-faded">#DaltonMassacre</div>
           <div class="trend-posts-row faded-row">
-            203K posts
+            156K posts
             <span class="trend-falling">Falling <span class="arrow">↓↓</span></span>
           </div>
         </div>
@@ -195,5 +202,37 @@
       </li>
     </ul>
   </div>
+  <script>
+    (function () {
+      var started = false;
+      var items = document.querySelectorAll('.trend-item');
+      function run() {
+        if (started) return;
+        started = true;
+        for (var i = 0; i < items.length; i++) {
+          (function (idx) {
+            setTimeout(function () {
+              items[idx].classList.add('visible');
+            }, 260 * idx);
+          })(i);
+        }
+      }
+      if (typeof IntersectionObserver !== 'undefined') {
+        var obs = new IntersectionObserver(function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) {
+              obs.disconnect();
+              run();
+              return;
+            }
+          }
+        }, { root: null, threshold: 0.05 });
+        obs.observe(document.body);
+        setTimeout(function () { if (!started) run(); }, 1200);
+      } else {
+        run();
+      }
+    })();
+  </script>
 </body>
 </html>
