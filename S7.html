@@ -1221,10 +1221,18 @@ Deaths confirmed today:      47
             hint.innerHTML = DOWN_ARROW + '<span class="swipe-hint-text">next video</span>';
             inner.appendChild(hint);
             var shown = false;
-            video.addEventListener('ended', function () {
-              if (shown) return;
-              shown = true;
-              hint.classList.add('visible');
+            var firstLoopDone = false;
+            var lastTime = 0;
+            video.addEventListener('timeupdate', function () {
+              if (firstLoopDone) return;
+              if (video.currentTime < lastTime && lastTime > 0) {
+                firstLoopDone = true;
+                if (!shown) {
+                  shown = true;
+                  hint.classList.add('visible');
+                }
+              }
+              lastTime = video.currentTime;
             });
             feedEl.addEventListener('scroll', function () {
               if (hint.classList.contains('visible')) hint.classList.remove('visible');
