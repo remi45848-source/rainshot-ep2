@@ -1231,23 +1231,36 @@ Deaths confirmed today:      47
 
       (function setupLastSlideAdvance() {
         var lastIdx = sections.length - 1;
-        var s5TouchY = 0;
         var s5Locked = false;
+        function notifyParent() {
+          if (s5Locked) return;
+          s5Locked = true;
+          try { window.parent.postMessage({ type: 'S5_LAST_SWIPE' }, '*'); } catch (ex) {}
+          setTimeout(function () { s5Locked = false; }, 1500);
+        }
+        function isOnLast() {
+          return Math.round(feedEl.scrollTop / feedEl.clientHeight) === lastIdx;
+        }
+
+        var s5TouchY = 0;
         feedEl.addEventListener('touchstart', function (e) {
-          var cur = Math.round(feedEl.scrollTop / feedEl.clientHeight);
-          if (cur === lastIdx) s5TouchY = e.touches[0].clientY;
+          if (isOnLast()) s5TouchY = e.touches[0].clientY;
         }, { passive: true });
         feedEl.addEventListener('touchend', function (e) {
-          if (s5Locked) return;
-          var cur = Math.round(feedEl.scrollTop / feedEl.clientHeight);
-          if (cur !== lastIdx) return;
+          if (!isOnLast()) return;
           var diff = s5TouchY - e.changedTouches[0].clientY;
-          if (diff > 60) {
-            s5Locked = true;
-            try { window.parent.postMessage({ type: 'S5_LAST_SWIPE' }, '*'); } catch (ex) {}
-            setTimeout(function () { s5Locked = false; }, 1500);
-          }
+          if (diff > 50) notifyParent();
         }, { passive: true });
+
+        window.addEventListener('wheel', function (e) {
+          if (!isOnLast()) return;
+          if (e.deltaY > 0) notifyParent();
+        }, { passive: true });
+
+        window.addEventListener('keydown', function (e) {
+          if (!isOnLast()) return;
+          if (e.key === 'ArrowDown' || e.key === ' ') notifyParent();
+        });
       })();
 
       if ("IntersectionObserver" in window) {
