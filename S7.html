@@ -148,8 +148,99 @@
       display: block;
       background: #000;
     }
+    .video-play {
+      display: none !important;
+    }
+
+    .tiktok-tap-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tiktok-pause-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .tiktok-pause-icon.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .tiktok-pause-icon.fade-out {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.1);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .tiktok-pause-icon svg {
+      width: 38px;
+      height: 38px;
+      fill: #fff;
+      stroke: none;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+    }
+
+    .tiktok-side-actions {
+      position: absolute;
+      right: 10px;
+      bottom: 90px;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .tiktok-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
+    }
+    .tiktok-action-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .tiktok-action-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .tiktok-action-count {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: #fff;
+    }
 
     .video-label {
+      display: none;
       font-size: 11px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -243,7 +334,8 @@
       font-size: 13px;
     }
     .user-row,
-    .stats-row {
+    .stats-row,
+    .comments-badge {
       display: none;
     }
 
@@ -345,12 +437,20 @@
       font-size: 13px;
       line-height: 1.4;
       position: absolute;
-      right: 14px;
+      left: 14px;
       bottom: 24px;
-      width: min(62vw, 320px);
+      width: min(78vw, 420px);
       z-index: 5;
-      justify-content: flex-end;
-      text-align: right;
+      justify-content: flex-start;
+      text-align: left;
+    }
+    .caption-username {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
     }
 
     .caption-text {
@@ -368,15 +468,7 @@
     }
 
     .caption-more {
-      flex-shrink: 0;
-      margin-left: 4px;
-      font-size: 12px;
-      color: var(--accent-cyan);
-      text-transform: lowercase;
-      border: none;
-      background: none;
-      padding: 0;
-      cursor: pointer;
+      display: none !important;
     }
 
     .caption-more:active {
@@ -389,6 +481,12 @@
       justify-content: space-between;
       align-items: center;
       font-size: 12px;
+    }
+    .stats-row,
+    .user-row,
+    .comments-badge,
+    .stat-group {
+      display: none !important;
     }
 
     .stat-group {
@@ -844,11 +942,59 @@ Deaths confirmed today:      47
       });
     });
 
-    // TikTok-style autoplay: visible card plays, others pause
+    // TikTok-like behavior: swipe up -> next, autoplay visible card, username+caption at left-bottom
     (function () {
+      var feedEl = document.querySelector(".feed");
       var sections = Array.prototype.slice.call(document.querySelectorAll(".feed-item"));
       var videos = Array.prototype.slice.call(document.querySelectorAll(".story-feed-video"));
-      if (!sections.length || !videos.length) return;
+      if (!feedEl || !sections.length || !videos.length) return;
+
+      var unlockedByGesture = false;
+      var currentSection = sections[0];
+      var activeVideo = null;
+      var touchStartY = 0;
+
+      function ensureSideActions() {
+        sections.forEach(function (section, idx) {
+          var holder = section.querySelector(".video-inner, .terminal-inner");
+          if (!holder) return;
+          if (holder.querySelector(".tiktok-side-actions")) return;
+          var wrap = document.createElement("div");
+          wrap.className = "tiktok-side-actions";
+          wrap.innerHTML =
+            '<div class="tiktok-action">' +
+              '<span class="tiktok-action-icon"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.4-7 10-7 10z"></path></svg></span>' +
+              '<span class="tiktok-action-count">' + (idx === 0 ? "24.1K" : idx === 1 ? "8.7K" : idx === 2 ? "3.2K" : idx === 3 ? "5.6K" : "12.3K") + '</span>' +
+            '</div>' +
+            '<div class="tiktok-action">' +
+              '<span class="tiktok-action-icon"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg></span>' +
+              '<span class="tiktok-action-count">' + (idx === 4 ? "OFF" : (idx === 0 ? "4.8K" : idx === 1 ? "2.1K" : idx === 2 ? "891" : "LOCK")) + '</span>' +
+            '</div>' +
+            '<div class="tiktok-action">' +
+              '<span class="tiktok-action-icon"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-3-6 3z"></path></svg></span>' +
+              '<span class="tiktok-action-count">' + (idx === 0 ? "6.3K" : idx === 1 ? "1.4K" : idx === 2 ? "502" : idx === 3 ? "1.1K" : "3.7K") + '</span>' +
+            '</div>' +
+            '<div class="tiktok-action">' +
+              '<span class="tiktok-action-icon"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4z"></path></svg></span>' +
+              '<span class="tiktok-action-count">' + (idx === 0 ? "9.2K" : idx === 1 ? "1.8K" : idx === 2 ? "347" : idx === 3 ? "623" : "8.1K") + '</span>' +
+            '</div>';
+          holder.appendChild(wrap);
+        });
+      }
+
+      function injectCaptionUsernames() {
+        sections.forEach(function (section) {
+          var caption = section.querySelector(".caption-text");
+          if (!caption) return;
+          if (caption.querySelector(".caption-username")) return;
+          var usernameNode = section.querySelector(".username");
+          var usernameText = usernameNode ? usernameNode.textContent : "@user";
+          var userEl = document.createElement("span");
+          userEl.className = "caption-username";
+          userEl.textContent = usernameText;
+          caption.insertBefore(userEl, caption.firstChild);
+        });
+      }
 
       function pauseAll() {
         videos.forEach(function (v) {
@@ -856,44 +1002,177 @@ Deaths confirmed today:      47
         });
       }
 
-      function playInSection(section) {
-        if (!section) return;
-        var video = section.querySelector(".story-feed-video");
-        if (!video) return;
-        pauseAll();
-        try {
-          var p = video.play();
-          if (p && p.catch) p.catch(function () {});
-        } catch (e) {}
+      function nearestSectionByScroll() {
+        var idx = Math.round(feedEl.scrollTop / feedEl.clientHeight);
+        if (idx < 0) idx = 0;
+        if (idx >= sections.length) idx = sections.length - 1;
+        return sections[idx];
       }
 
-      // First screen try play
-      playInSection(sections[0]);
+      var firstScreenPlayed = false;
+
+      function playInSection(section, force) {
+        if (!section) return;
+        var video = section.querySelector(".story-feed-video");
+        if (!video) {
+          pauseAll();
+          activeVideo = null;
+          currentSection = section;
+          return;
+        }
+        var isFirst = (sections.indexOf(section) === 0);
+        if (isFirst && !firstScreenPlayed && !force) {
+          currentSection = section;
+          activeVideo = video;
+          pauseAll();
+          video.muted = false;
+          video.volume = 1;
+          updatePauseIcon(section);
+          return;
+        }
+        if (activeVideo === video && !video.paused) return;
+        currentSection = section;
+        activeVideo = video;
+        pauseAll();
+        video.currentTime = 0;
+        video.muted = false;
+        video.volume = 1;
+        try {
+          var p = video.play();
+          if (p && p.catch) {
+            p.catch(function () {
+              setTimeout(function () {
+                video.muted = false;
+                video.play().catch(function () {});
+              }, 160);
+            });
+          }
+        } catch (e) {}
+        updatePauseIcon(section);
+      }
+
+      function unlockAudioAndReplay() {
+        unlockedByGesture = true;
+        videos.forEach(function (v) {
+          v.muted = false;
+          v.volume = 1;
+        });
+        if (activeVideo) {
+          activeVideo.muted = false;
+          activeVideo.volume = 1;
+          activeVideo.play().catch(function () {});
+        } else {
+          playInSection(nearestSectionByScroll());
+        }
+      }
+
+      function gotoByDelta(delta) {
+        var current = nearestSectionByScroll();
+        var idx = sections.indexOf(current);
+        if (idx < 0) idx = 0;
+        var next = idx + delta;
+        if (next < 0) next = 0;
+        if (next >= sections.length) next = sections.length - 1;
+        feedEl.scrollTo({ top: next * feedEl.clientHeight, behavior: "smooth" });
+      }
+
+      var PLAY_SVG = '<svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"></polygon></svg>';
+      var PAUSE_SVG = '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="4" height="18" rx="1"></rect><rect x="15" y="3" width="4" height="18" rx="1"></rect></svg>';
+
+      function setupTapToPause() {
+        sections.forEach(function (section, idx) {
+          var inner = section.querySelector(".video-inner, .terminal-inner");
+          if (!inner) return;
+          if (inner.querySelector(".tiktok-tap-overlay")) return;
+          var video = section.querySelector(".story-feed-video");
+          if (!video) return;
+
+          var overlay = document.createElement("div");
+          overlay.className = "tiktok-tap-overlay";
+          var icon = document.createElement("div");
+          icon.className = "tiktok-pause-icon";
+
+          if (idx === 0) {
+            icon.innerHTML = PLAY_SVG;
+            icon.classList.add("show");
+            video.pause();
+            video.muted = false;
+          } else {
+            icon.innerHTML = PAUSE_SVG;
+          }
+
+          overlay.appendChild(icon);
+          inner.appendChild(overlay);
+
+          var hideTimer = null;
+          overlay.addEventListener("click", function (e) {
+            e.stopPropagation();
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+            if (video.paused) {
+              firstScreenPlayed = true;
+              unlockedByGesture = true;
+              video.muted = false;
+              video.volume = 1;
+              video.play().catch(function () {});
+              activeVideo = video;
+              icon.innerHTML = PLAY_SVG;
+              icon.classList.remove("fade-out");
+              icon.classList.add("show");
+              hideTimer = setTimeout(function () {
+                icon.classList.add("fade-out");
+                icon.classList.remove("show");
+              }, 400);
+            } else {
+              video.pause();
+              icon.innerHTML = PAUSE_SVG;
+              icon.classList.remove("fade-out");
+              icon.classList.add("show");
+            }
+          });
+        });
+      }
+
+      function updatePauseIcon(section) {
+        if (!section) return;
+        var icon = section.querySelector(".tiktok-pause-icon");
+        if (!icon) return;
+        var video = section.querySelector(".story-feed-video");
+        if (!video) return;
+        if (video.paused) {
+          icon.innerHTML = PLAY_SVG;
+          icon.classList.remove("fade-out");
+          icon.classList.add("show");
+        } else {
+          icon.classList.add("fade-out");
+          icon.classList.remove("show");
+        }
+      }
+
+      ensureSideActions();
+      injectCaptionUsernames();
+      setupTapToPause();
+      pauseAll();
+
+      feedEl.addEventListener("scroll", function () {
+        playInSection(nearestSectionByScroll());
+      }, { passive: true });
+
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) pauseAll();
+        else playInSection(nearestSectionByScroll());
+      });
 
       if ("IntersectionObserver" in window) {
-        var activeSection = sections[0];
         var observer = new IntersectionObserver(function (entries) {
           var best = null;
           entries.forEach(function (entry) {
             if (!best || entry.intersectionRatio > best.intersectionRatio) best = entry;
           });
-          if (!best) return;
-          if (best.isIntersecting && best.intersectionRatio >= 0.62) {
-            activeSection = best.target;
-            playInSection(activeSection);
+          if (best && best.isIntersecting && best.intersectionRatio >= 0.62) {
+            playInSection(best.target);
           }
-        }, { threshold: [0.4, 0.62, 0.8] });
-
+        }, { root: feedEl, threshold: [0.35, 0.62, 0.8] });
         sections.forEach(function (s) { observer.observe(s); });
-      } else {
-        // Fallback for old browsers
-        window.addEventListener("scroll", function () {
-          var y = window.scrollY || document.documentElement.scrollTop || 0;
-          var idx = Math.round(y / window.innerHeight);
-          if (idx < 0) idx = 0;
-          if (idx >= sections.length) idx = sections.length - 1;
-          playInSection(sections[idx]);
-        }, { passive: true });
       }
     })();
 
