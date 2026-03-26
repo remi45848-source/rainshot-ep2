@@ -84,14 +84,14 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 14px 10px 18px;
+      padding: 0;
       position: relative;
     }
 
     @media (min-width: 480px) {
       .feed-item,
       .feed-end {
-        padding: 18px 16px 22px;
+        padding: 0;
       }
     }
 
@@ -99,8 +99,8 @@
     .video-wrapper {
       position: relative;
       width: 100%;
-      height: 75vh;
-      max-height: 75vh;
+      height: 100vh;
+      max-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -109,8 +109,8 @@
 
     .video-wrapper-inner {
       position: relative;
-      width: 100%;
-      max-width: 100%;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
       aspect-ratio: 9 / 16;
       margin: 0 auto;
       background: radial-gradient(circle at 20% 0, #25254a 0, #11111f 32%, #020206 100%);
@@ -216,13 +216,13 @@
     /* 文本区域底部渐变（在 caption 背后） */
     .bottom-bar {
       position: relative;
-      height: calc(25vh - 10px);
-      min-height: 120px;
+      height: 0;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       gap: 6px;
-      padding: 6px 4px 0;
+      padding: 0;
     }
 
     .bottom-bar::before {
@@ -232,12 +232,7 @@
       right: -16px;
       bottom: -18px;
       height: 120%;
-      background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.9) 0,
-        rgba(0, 0, 0, 0.7) 35%,
-        transparent 100%
-      );
+      background: transparent;
       z-index: -1;
     }
 
@@ -247,6 +242,10 @@
       justify-content: space-between;
       gap: 10px;
       font-size: 13px;
+    }
+    .user-row,
+    .stats-row {
+      display: none;
     }
 
     .user-main {
@@ -340,17 +339,26 @@
     }
 
     .caption-row {
-      margin-top: 4px;
+      margin-top: 0;
       display: flex;
       align-items: flex-start;
       gap: 6px;
       font-size: 13px;
       line-height: 1.4;
+      position: absolute;
+      right: 14px;
+      bottom: 24px;
+      width: min(62vw, 320px);
+      z-index: 5;
+      justify-content: flex-end;
+      text-align: right;
     }
 
     .caption-text {
-      flex: 1 1 auto;
+      flex: 0 1 auto;
       color: #f5f5f7;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+      background: transparent;
     }
 
     .line-clamp {
@@ -547,7 +555,7 @@
         <div class="video-wrapper anime-border">
           <div class="video-wrapper-inner">
             <div class="video-inner">
-              <video class="story-feed-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616383904009751854_1774196756742_m.mp4"></video>
+              <video class="story-feed-video" autoplay loop playsinline webkit-playsinline preload="auto" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616383904009751854_1774196756742_m.mp4"></video>
               <div class="video-label">
                 <span class="video-label-dot"></span>
                 <span>NEWS ANCHOR — 10s</span>
@@ -605,7 +613,7 @@
         <div class="video-wrapper anime-border">
           <div class="video-wrapper-inner">
             <div class="video-inner">
-              <video class="story-feed-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616721351033802035_1774196806454_m.mp4"></video>
+              <video class="story-feed-video" autoplay loop playsinline webkit-playsinline preload="auto" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616721351033802035_1774196806454_m.mp4"></video>
               <div class="video-label">
                 <span class="video-label-dot"></span>
                 <span>POLITICAL BLOGGER — 10s</span>
@@ -662,7 +670,7 @@
         <div class="video-wrapper anime-border">
           <div class="video-wrapper-inner">
             <div class="video-inner">
-              <video class="story-feed-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616774402343996698_1774195143746_m.mp4"></video>
+              <video class="story-feed-video" autoplay loop playsinline webkit-playsinline preload="auto" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/dreamina_7616774402343996698_1774195143746_m.mp4"></video>
               <div class="video-label">
                 <span class="video-label-dot"></span>
                 <span>CITIZEN FOOTAGE — 10s</span>
@@ -719,7 +727,7 @@
         <div class="video-wrapper anime-border">
           <div class="video-wrapper-inner">
             <div class="video-inner">
-              <video class="story-feed-video" autoplay muted loop playsinline webkit-playsinline preload="metadata" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/lv_0_20260326070027.mp4"></video>
+              <video class="story-feed-video" autoplay loop playsinline webkit-playsinline preload="auto" src="https://pub-0f8fb9a88fd749b0987b026db4672ab5.r2.dev/lv_0_20260326070027.mp4"></video>
               <div class="video-label">
                 <span class="video-label-dot"></span>
                 <span>PODCAST CLIP — 10s</span>
@@ -731,12 +739,6 @@
               </div>
             </div>
 
-            <div class="paywall">
-              <div class="paywall-inner">
-                <span class="paywall-lock">🔒</span>
-                <span>Subscribe to unlock</span>
-              </div>
-            </div>
           </div>
         </div>
 
