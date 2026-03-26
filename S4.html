@@ -213,16 +213,10 @@
       var NOTIF_IDS = ['notif-1', 'notif-2', 'notif-3'];
 
       function setLockScreenTime() {
-        var now = new Date();
-        var hours = now.getHours();
-        var mins = now.getMinutes();
-        var timeStr = hours + ':' + (mins < 10 ? '0' : '') + mins;
-        var options = { weekday: 'long', month: 'long', day: 'numeric' };
-        var dateStr = now.toLocaleDateString('en-US', options);
         var timeEl = document.getElementById('lockTime');
         var dateEl = document.getElementById('lockDate');
-        if (timeEl) timeEl.textContent = timeStr;
-        if (dateEl) dateEl.textContent = dateStr;
+        if (timeEl) timeEl.textContent = '7:03';
+        if (dateEl) dateEl.textContent = 'Sunday, September 7, 2031';
       }
 
       function playNotificationSound() {
