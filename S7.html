@@ -192,6 +192,44 @@
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
     }
 
+    .swipe-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 28%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .swipe-hint.visible { opacity: 1; }
+    .swipe-hint-arrow {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: rgba(255,255,255,0.85);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: swipeHintBounce 1.2s ease-in-out infinite;
+    }
+    .swipe-hint-text {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 500;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+    }
+    @keyframes swipeHintBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
     .tiktok-side-actions {
       position: absolute;
       right: 10px;
@@ -1153,6 +1191,35 @@ Deaths confirmed today:      47
       setupTapToPause();
       pauseAll();
 
+      (function setupSwipeHint() {
+        var firstSection = sections[0];
+        if (!firstSection) return;
+        var firstVideo = firstSection.querySelector('.story-feed-video');
+        if (!firstVideo) return;
+        var inner = firstSection.querySelector('.video-inner');
+        if (!inner) return;
+
+        var hint = document.createElement('div');
+        hint.className = 'swipe-hint';
+        hint.innerHTML =
+          '<svg class="swipe-hint-arrow" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>' +
+          '<span class="swipe-hint-text">next video</span>';
+        inner.appendChild(hint);
+
+        var shown = false;
+        firstVideo.addEventListener('ended', function () {
+          if (shown) return;
+          shown = true;
+          hint.classList.add('visible');
+        });
+        feedEl.addEventListener('scroll', function onScroll() {
+          if (hint.classList.contains('visible')) {
+            hint.classList.remove('visible');
+            feedEl.removeEventListener('scroll', onScroll);
+          }
+        }, { passive: true });
+      })();
+
       feedEl.addEventListener("scroll", function () {
         playInSection(nearestSectionByScroll());
       }, { passive: true });
@@ -1161,6 +1228,27 @@ Deaths confirmed today:      47
         if (document.hidden) pauseAll();
         else playInSection(nearestSectionByScroll());
       });
+
+      (function setupLastSlideAdvance() {
+        var lastIdx = sections.length - 1;
+        var s5TouchY = 0;
+        var s5Locked = false;
+        feedEl.addEventListener('touchstart', function (e) {
+          var cur = Math.round(feedEl.scrollTop / feedEl.clientHeight);
+          if (cur === lastIdx) s5TouchY = e.touches[0].clientY;
+        }, { passive: true });
+        feedEl.addEventListener('touchend', function (e) {
+          if (s5Locked) return;
+          var cur = Math.round(feedEl.scrollTop / feedEl.clientHeight);
+          if (cur !== lastIdx) return;
+          var diff = s5TouchY - e.changedTouches[0].clientY;
+          if (diff > 60) {
+            s5Locked = true;
+            try { window.parent.postMessage({ type: 'S5_LAST_SWIPE' }, '*'); } catch (ex) {}
+            setTimeout(function () { s5Locked = false; }, 1500);
+          }
+        }, { passive: true });
+      })();
 
       if ("IntersectionObserver" in window) {
         var observer = new IntersectionObserver(function (entries) {
