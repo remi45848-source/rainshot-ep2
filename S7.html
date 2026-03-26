@@ -195,31 +195,31 @@
     .swipe-hint {
       position: absolute;
       left: 50%;
-      bottom: 28%;
+      bottom: 22%;
       transform: translateX(-50%);
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.5s ease;
     }
     .swipe-hint.visible { opacity: 1; }
     .swipe-hint-arrow {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       fill: none;
-      stroke: rgba(255,255,255,0.85);
+      stroke: rgba(255,255,255,0.8);
       stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
-      animation: swipeHintBounce 1.2s ease-in-out infinite;
+      animation: swipeHintBounce 1.4s ease-in-out infinite;
     }
     .swipe-hint-text {
-      font-size: 12px;
-      color: rgba(255,255,255,0.7);
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
       letter-spacing: 1px;
       text-transform: uppercase;
       font-weight: 500;
@@ -227,8 +227,23 @@
     }
     @keyframes swipeHintBounce {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+      50% { transform: translateY(6px); }
     }
+    .corner-hint {
+      position: absolute;
+      right: 16px;
+      bottom: 28px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .corner-hint.visible { opacity: 1; }
+    .corner-hint .swipe-hint-arrow { animation: swipeHintBounce 1.4s ease-in-out infinite; }
 
     .tiktok-side-actions {
       position: absolute;
@@ -1191,33 +1206,38 @@ Deaths confirmed today:      47
       setupTapToPause();
       pauseAll();
 
-      (function setupSwipeHint() {
-        var firstSection = sections[0];
-        if (!firstSection) return;
-        var firstVideo = firstSection.querySelector('.story-feed-video');
-        if (!firstVideo) return;
-        var inner = firstSection.querySelector('.video-inner');
-        if (!inner) return;
+      (function setupSwipeHints() {
+        var DOWN_ARROW = '<svg class="swipe-hint-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+        var lastIdx = sections.length - 1;
 
-        var hint = document.createElement('div');
-        hint.className = 'swipe-hint';
-        hint.innerHTML =
-          '<svg class="swipe-hint-arrow" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>' +
-          '<span class="swipe-hint-text">next video</span>';
-        inner.appendChild(hint);
+        sections.forEach(function (section, idx) {
+          var video = section.querySelector('.story-feed-video');
+          var inner = section.querySelector('.video-inner, .terminal-inner');
+          if (!inner) return;
 
-        var shown = false;
-        firstVideo.addEventListener('ended', function () {
-          if (shown) return;
-          shown = true;
-          hint.classList.add('visible');
-        });
-        feedEl.addEventListener('scroll', function onScroll() {
-          if (hint.classList.contains('visible')) {
-            hint.classList.remove('visible');
-            feedEl.removeEventListener('scroll', onScroll);
+          if (video) {
+            var hint = document.createElement('div');
+            hint.className = 'swipe-hint';
+            hint.innerHTML = DOWN_ARROW + '<span class="swipe-hint-text">next video</span>';
+            inner.appendChild(hint);
+            var shown = false;
+            video.addEventListener('ended', function () {
+              if (shown) return;
+              shown = true;
+              hint.classList.add('visible');
+            });
+            feedEl.addEventListener('scroll', function () {
+              if (hint.classList.contains('visible')) hint.classList.remove('visible');
+            }, { passive: true });
           }
-        }, { passive: true });
+
+          if (idx === lastIdx) {
+            var cHint = document.createElement('div');
+            cHint.className = 'corner-hint visible';
+            cHint.innerHTML = DOWN_ARROW + '<span class="swipe-hint-text">next</span>';
+            inner.appendChild(cHint);
+          }
+        });
       })();
 
       feedEl.addEventListener("scroll", function () {
@@ -1229,70 +1249,6 @@ Deaths confirmed today:      47
         else playInSection(nearestSectionByScroll());
       });
 
-      (function setupParentScrollBridge() {
-        var lastIdx = sections.length - 1;
-
-        function currentIdx() {
-          return Math.round(feedEl.scrollTop / feedEl.clientHeight);
-        }
-
-        function scrollToIdx(i) {
-          if (i < 0) i = 0;
-          if (i > lastIdx) i = lastIdx;
-          feedEl.scrollTo({ top: i * feedEl.clientHeight, behavior: 'smooth' });
-        }
-
-        function notifyParent() {
-          try {
-            window.parent.postMessage('S5_LAST_SWIPE', '*');
-            window.parent.postMessage({ type: 'S5_LAST_SWIPE' }, '*');
-          } catch (ex) {}
-        }
-
-        window.addEventListener('message', function (e) {
-          var msg = e.data;
-          if (msg === 'S5_SCROLL_NEXT') {
-            var cur = currentIdx();
-            if (cur >= lastIdx) {
-              notifyParent();
-            } else {
-              scrollToIdx(cur + 1);
-            }
-          } else if (msg === 'S5_SCROLL_PREV') {
-            var cur2 = currentIdx();
-            if (cur2 > 0) scrollToIdx(cur2 - 1);
-          }
-        });
-
-        var s5TouchY = 0;
-        var s5TouchActive = false;
-        document.addEventListener('touchstart', function (e) {
-          var cur = currentIdx();
-          if (cur >= lastIdx) {
-            s5TouchY = e.touches[0].clientY;
-            s5TouchActive = true;
-          } else {
-            s5TouchActive = false;
-          }
-        }, { passive: true });
-        document.addEventListener('touchend', function (e) {
-          if (!s5TouchActive) return;
-          s5TouchActive = false;
-          if (currentIdx() < lastIdx) return;
-          var diff = s5TouchY - e.changedTouches[0].clientY;
-          if (diff > 40) notifyParent();
-        }, { passive: true });
-
-        document.addEventListener('wheel', function (e) {
-          if (currentIdx() < lastIdx) return;
-          if (e.deltaY > 0) notifyParent();
-        }, { passive: true });
-
-        document.addEventListener('keydown', function (e) {
-          if (currentIdx() < lastIdx) return;
-          if (e.key === 'ArrowDown' || e.key === ' ') notifyParent();
-        });
-      })();
 
       if ("IntersectionObserver" in window) {
         var observer = new IntersectionObserver(function (entries) {
