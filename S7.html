@@ -109,9 +109,8 @@
 
     .video-wrapper-inner {
       position: relative;
-      width: min(100vw, calc(100vh * 9 / 16));
-      height: min(100vh, calc(100vw * 16 / 9));
-      aspect-ratio: 9 / 16;
+      width: 100vw;
+      height: 100vh;
       margin: 0 auto;
       background: radial-gradient(circle at 20% 0, #25254a 0, #11111f 32%, #020206 100%);
       border-radius: 0;
@@ -844,6 +843,59 @@ Deaths confirmed today:      47
         btn.style.display = "none";
       });
     });
+
+    // TikTok-style autoplay: visible card plays, others pause
+    (function () {
+      var sections = Array.prototype.slice.call(document.querySelectorAll(".feed-item"));
+      var videos = Array.prototype.slice.call(document.querySelectorAll(".story-feed-video"));
+      if (!sections.length || !videos.length) return;
+
+      function pauseAll() {
+        videos.forEach(function (v) {
+          try { v.pause(); } catch (e) {}
+        });
+      }
+
+      function playInSection(section) {
+        if (!section) return;
+        var video = section.querySelector(".story-feed-video");
+        if (!video) return;
+        pauseAll();
+        try {
+          var p = video.play();
+          if (p && p.catch) p.catch(function () {});
+        } catch (e) {}
+      }
+
+      // First screen try play
+      playInSection(sections[0]);
+
+      if ("IntersectionObserver" in window) {
+        var activeSection = sections[0];
+        var observer = new IntersectionObserver(function (entries) {
+          var best = null;
+          entries.forEach(function (entry) {
+            if (!best || entry.intersectionRatio > best.intersectionRatio) best = entry;
+          });
+          if (!best) return;
+          if (best.isIntersecting && best.intersectionRatio >= 0.62) {
+            activeSection = best.target;
+            playInSection(activeSection);
+          }
+        }, { threshold: [0.4, 0.62, 0.8] });
+
+        sections.forEach(function (s) { observer.observe(s); });
+      } else {
+        // Fallback for old browsers
+        window.addEventListener("scroll", function () {
+          var y = window.scrollY || document.documentElement.scrollTop || 0;
+          var idx = Math.round(y / window.innerHeight);
+          if (idx < 0) idx = 0;
+          if (idx >= sections.length) idx = sections.length - 1;
+          playInSection(sections[idx]);
+        }, { passive: true });
+      }
+    })();
 
   </script>
 </body>
